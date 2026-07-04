@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/*
+ * Signal in deep water: a forward pass as bioluminescent ink propagating
+ * through darkness. Amber (--color-verdict) is reserved for the prediction.
+ */
+@theme {
+  --color-abyss: #060b14;
+  --color-hull: #0d1524;
+  --color-trace: #26374f;
+  --color-signal: #5fd4f5;
+  --color-core: #eaf8ff;
+  --color-verdict: #ffaf5f;
+
+  --font-display: var(--font-chakra), sans-serif;
+  --font-mono: var(--font-plex-mono), monospace;
+}
+
+body {
+  background: var(--color-abyss);
+  color: var(--color-core);
+  font-family: var(--font-mono);
+}
+
+::selection {
+  background: var(--color-signal);
+  color: var(--color-abyss);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 2px;
+}
+
+/* Instrument-panel surface used by the chrome around the visualization. */
+.panel {
+  background: color-mix(in srgb, var(--color-hull) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-trace) 60%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.pixelated {
+  image-rendering: pixelated;
+}
