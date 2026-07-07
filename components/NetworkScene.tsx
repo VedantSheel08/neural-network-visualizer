@@ -1,78 +1,100 @@
 "use client";
 
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
+import type { ThreeEvent } from "@react-three/fiber";
+import type { MotionValue } from "framer-motion";
 import * as THREE from "three";
 import { useEffect, useMemo, useRef } from "react";
-import type { ForwardResult } from "@/lib/inference";
-import { PALETTE, RUN_MS, STAGES, stageProgress } from "@/lib/theme";
+import { useApp } from "@/lib/store";
+import {
+  ARCH,
+  PALETTES,
+  RUN_MS,
+  STAGES,
+  STEP_CHECKPOINTS,
+  stageProgress,
+  type Mode,
+} from "@/lib/theme";
 
-/** Everything the scene needs for one inference run — all real numbers. */
-export interface RunState {
-  id: number;
-  result: ForwardResult;
-  /**
-   * Signed signal per edge, one array per edge group:
-   * [0] input regions -> h1 (16 cells x 16 nodes), [1] h1 -> h2 (16x16),
-   * [2] h2 -> out (10x16). Values are w * upstream-activation sums.
-   */
-  edges: [Float32Array, Float32Array, Float32Array];
-}
+/*
+ * The network: 784 -> 64 -> 48 -> 32 -> 16 -> 10, laid out left to right.
+ * The input is the drawn 28x28 image on a plane; every other layer is
+ * instanced spheres; every connection is an instanced cylinder whose radius
+ * and brightness come from |weight x upstream activation|, with a wavefront
+ * traveling source -> target during its stage. Dark mode glows (additive),
+ * light mode inks (normal blending). All of it reads live values only.
+ */
 
-interface NetworkSceneProps {
-  input: Float32Array | null;
-  run: RunState | null;
-  reducedMotion: boolean;
-  lowPower: boolean;
-}
+const LAYER_SIZES = ARCH.slice(1); // [64, 48, 32, 16, 10]
+const N_LAYERS = LAYER_SIZES.length;
+const LAYER_OFFSETS = LAYER_SIZES.reduce<number[]>((acc, _, i) => {
+  acc.push(i === 0 ? 0 : acc[i - 1] + LAYER_SIZES[i - 1]);
+  return acc;
+}, []);
+const NODE_COUNT = LAYER_SIZES.reduce((a, b) => a + b, 0); // 170
 
-// ---- static geometry of the network ----------------------------------------
-
-const LAYER_X = { input: -6, h1: -2, h2: 2, out: 6 };
+const LAYER_X = [-9, -5.4, -1.8, 1.8, 5.4, 9];
 const PLANE_SIZE = 3.2;
 
-function hiddenPos(x: number, i: number): THREE.Vector3 {
-  const r = Math.floor(i / 4);
-  const c = i % 4;
-  return new THREE.Vector3(x, 1.65 - r * 1.1, -1.65 + c * 1.1);
+// rows x cols grid per hidden layer (output is a column)
+const GRIDS = [
+  { r: 8, c: 8, dy: 0.72, dz: 0.72 },
+  { r: 6, c: 8, dy: 0.78, dz: 0.72 },
+  { r: 4, c: 8, dy: 0.9, dz: 0.72 },
+  { r: 4, c: 4, dy: 1.0, dz: 1.0 },
+];
+
+function nodeLayer(k: number): number {
+  for (let l = N_LAYERS - 1; l >= 0; l--) if (k >= LAYER_OFFSETS[l]) return l;
+  return 0;
 }
 
-function outputPos(i: number): THREE.Vector3 {
-  return new THREE.Vector3(LAYER_X.out, 3.06 - i * 0.68, 0);
+function nodePos(layer: number, i: number): THREE.Vector3 {
+  const x = LAYER_X[layer + 1];
+  if (layer === N_LAYERS - 1) return new THREE.Vector3(x, (9 - i * 2) * 0.31, 0);
+  const g = GRIDS[layer];
+  const row = Math.floor(i / g.c);
+  const col = i % g.c;
+  return new THREE.Vector3(
+    x,
+    ((g.r - 1) / 2 - row) * g.dy,
+    (col - (g.c - 1) / 2) * g.dz
+  );
 }
 
-/** Center of input-region cell (4x4 partition of the drawn image plane). */
 function anchorPos(cell: number): THREE.Vector3 {
   const r = Math.floor(cell / 4);
   const c = cell % 4;
-  return new THREE.Vector3(LAYER_X.input + (-1.2 + c * 0.8), 1.2 - r * 0.8, 0);
+  return new THREE.Vector3(LAYER_X[0] + (-1.2 + c * 0.8), 1.2 - r * 0.8, 0);
 }
+
+const NODE_R = [0.13, 0.14, 0.15, 0.18, 0.22];
 
 interface Seg {
   a: THREE.Vector3;
   b: THREE.Vector3;
 }
 
-function buildSegments(): [Seg[], Seg[], Seg[]] {
-  const h1 = Array.from({ length: 16 }, (_, i) => hiddenPos(LAYER_X.h1, i));
-  const h2 = Array.from({ length: 16 }, (_, i) => hiddenPos(LAYER_X.h2, i));
-  const out = Array.from({ length: 10 }, (_, i) => outputPos(i));
-  const g1: Seg[] = [];
+function buildSegments(): Seg[][] {
+  const groups: Seg[][] = [];
+  // input regions -> layer 1, ordered [cell * n + i] like inputRegionContributions
+  const g0: Seg[] = [];
   for (let cell = 0; cell < 16; cell++)
-    for (let i = 0; i < 16; i++) g1.push({ a: anchorPos(cell), b: h1[i] });
-  const g2: Seg[] = [];
-  for (let i = 0; i < 16; i++)
-    for (let j = 0; j < 16; j++) g2.push({ a: h1[j], b: h2[i] });
-  const g3: Seg[] = [];
-  for (let i = 0; i < 10; i++)
-    for (let j = 0; j < 16; j++) g3.push({ a: h2[j], b: out[i] });
-  return [g1, g2, g3];
+    for (let i = 0; i < LAYER_SIZES[0]; i++) g0.push({ a: anchorPos(cell), b: nodePos(0, i) });
+  groups.push(g0);
+  for (let t = 1; t < N_LAYERS; t++) {
+    const nIn = LAYER_SIZES[t - 1];
+    const nOut = LAYER_SIZES[t];
+    const g: Seg[] = [];
+    for (let i = 0; i < nOut; i++)
+      for (let j = 0; j < nIn; j++) g.push({ a: nodePos(t - 1, j), b: nodePos(t, i) });
+    groups.push(g);
+  }
+  return groups;
 }
 
 // ---- signal-fiber shader ----------------------------------------------------
-// The signature element: each connection is an instanced cylinder whose
-// radius and brightness come from |weight x upstream activation|, with a
-// white-hot wavefront (uPulse) traveling source -> target during its stage.
 
 const fiberVertex = /* glsl */ `
   attribute float aIntensity;
@@ -90,10 +112,11 @@ const fiberVertex = /* glsl */ `
 
 const fiberFragment = /* glsl */ `
   uniform vec3 uSignal;
-  uniform vec3 uCore;
-  uniform vec3 uTrace;
+  uniform vec3 uHot;
+  uniform vec3 uNeg;
   uniform float uPulse;
   uniform float uGain;
+  uniform float uLight;
   varying float vAlong;
   varying float vIntensity;
   varying float vSign;
@@ -101,36 +124,41 @@ const fiberFragment = /* glsl */ `
     float head = exp(-pow((vAlong - uPulse) * 6.0, 2.0));
     float passed = smoothstep(vAlong - 0.08, vAlong, uPulse);
     float energy = vIntensity * (0.32 * passed + head * 1.1) * uGain;
+    energy *= mix(0.55, 1.0, step(0.0, vSign)); // inhibitory fibers stay quieter
     if (energy < 0.004) discard;
-    vec3 tint = mix(uTrace * 1.7, uSignal, step(0.0, vSign));
-    vec3 col = mix(tint, uCore, head * vIntensity);
-    gl_FragColor = vec4(col * energy, energy);
+    vec3 tint = mix(uNeg, uSignal, step(0.0, vSign));
+    vec3 col = mix(tint, uHot, head * vIntensity);
+    if (uLight > 0.5) {
+      gl_FragColor = vec4(col, min(energy * 0.7, 1.0)); // ink into paper
+    } else {
+      gl_FragColor = vec4(col * energy, energy);        // glowing filament
+    }
   }
 `;
 
-function makeFiberGroup(segments: Seg[], radialSegments: number, gain: number) {
+function makeFiberGroup(segments: Seg[], radialSegments: number, gain: number, mode: Mode) {
+  const p = PALETTES[mode];
   const geometry = new THREE.CylinderGeometry(1, 1, 1, radialSegments, 1, true);
   const count = segments.length;
-  geometry.setAttribute(
-    "aIntensity",
-    new THREE.InstancedBufferAttribute(new Float32Array(count), 1)
-  );
-  geometry.setAttribute(
-    "aSign",
-    new THREE.InstancedBufferAttribute(new Float32Array(count).fill(1), 1)
-  );
+  geometry.setAttribute("aIntensity", new THREE.InstancedBufferAttribute(new Float32Array(count), 1));
+  geometry.setAttribute("aSign", new THREE.InstancedBufferAttribute(new Float32Array(count).fill(1), 1));
+  const light = mode === "light";
+  const neg = light
+    ? new THREE.Color(p.graphite).multiplyScalar(0.8)
+    : new THREE.Color(p.graphite).multiplyScalar(1.7);
   const material = new THREE.ShaderMaterial({
     vertexShader: fiberVertex,
     fragmentShader: fiberFragment,
     uniforms: {
-      uSignal: { value: new THREE.Color(PALETTE.signal) },
-      uCore: { value: new THREE.Color(PALETTE.core) },
-      uTrace: { value: new THREE.Color(PALETTE.trace) },
+      uSignal: { value: new THREE.Color(p.copper) },
+      uHot: { value: new THREE.Color(p.ember) },
+      uNeg: { value: neg },
       uPulse: { value: -0.5 },
       uGain: { value: gain },
+      uLight: { value: light ? 1 : 0 },
     },
     transparent: true,
-    blending: THREE.AdditiveBlending,
+    blending: light ? THREE.NormalBlending : THREE.AdditiveBlending,
     depthWrite: false,
     side: THREE.DoubleSide,
   });
@@ -149,7 +177,7 @@ function makeFiberGroup(segments: Seg[], radialSegments: number, gain: number) {
       const len = dir.length();
       mid.addVectors(a, b).multiplyScalar(0.5);
       q.setFromUnitVectors(up, dir.normalize());
-      const r = 0.015 + 0.06 * (intensity ? intensity[k] : 0);
+      const r = 0.01 + 0.045 * (intensity ? intensity[k] : 0);
       m.compose(mid, q, new THREE.Vector3(r, len, r));
       mesh.setMatrixAt(k, m);
     }
@@ -159,11 +187,7 @@ function makeFiberGroup(segments: Seg[], radialSegments: number, gain: number) {
   return { mesh, material, setMatrices };
 }
 
-/** Normalize signed edge values into [0,1] intensity (sqrt to lift mids) + sign. */
-function applyEdgeValues(
-  group: ReturnType<typeof makeFiberGroup>,
-  values: Float32Array
-) {
+function applyEdgeValues(group: ReturnType<typeof makeFiberGroup>, values: Float32Array) {
   const n = values.length;
   let max = 0;
   for (let k = 0; k < n; k++) {
@@ -171,9 +195,8 @@ function applyEdgeValues(
     if (v > max) max = v;
   }
   const intensity = new Float32Array(n);
-  const geo = group.mesh.geometry;
-  const aIntensity = geo.getAttribute("aIntensity") as THREE.InstancedBufferAttribute;
-  const aSign = geo.getAttribute("aSign") as THREE.InstancedBufferAttribute;
+  const aIntensity = group.mesh.geometry.getAttribute("aIntensity") as THREE.InstancedBufferAttribute;
+  const aSign = group.mesh.geometry.getAttribute("aSign") as THREE.InstancedBufferAttribute;
   for (let k = 0; k < n; k++) {
     intensity[k] = max > 0 ? Math.sqrt(Math.abs(values[k]) / max) : 0;
     aIntensity.setX(k, intensity[k]);
@@ -184,53 +207,77 @@ function applyEdgeValues(
   group.setMatrices(intensity);
 }
 
+// ---- text sprites -------------------------------------------------------------
+
+function makeTextSprite(text: string, px: number, scale: number) {
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(128, Math.ceil(text.length * px * 0.68));
+  canvas.height = px * 2;
+  const draw = () => {
+    const ctx = canvas.getContext("2d")!;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = `500 ${px}px ui-monospace, Consolas, monospace`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+  };
+  draw();
+  const map = new THREE.CanvasTexture(canvas);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map, transparent: true, depthWrite: false }));
+  sprite.scale.set((scale * canvas.width) / canvas.height, scale, 1);
+  return sprite;
+}
+
 // ---- the network ------------------------------------------------------------
 
-const EDGE_STAGES = [STAGES.edges1, STAGES.edges2, STAGES.edges3] as const;
+// gain per group compensates additive overdraw (1024/3072/1536/512/160 fibers)
+const GROUP_GAINS = [0.42, 0.3, 0.45, 0.6, 0.85];
+const INTRO_MS = 2100;
 
-function Network({ input, run, reducedMotion, lowPower }: NetworkSceneProps) {
+interface NetworkProps {
+  scrollT?: MotionValue<number>;
+}
+
+function Network({ scrollT }: NetworkProps) {
+  const mode = useApp((s) => s.mode);
+  const lowPower = useApp((s) => s.lowPower);
+  const input = useApp((s) => s.input);
+  const run = useApp((s) => s.run);
+  const p = PALETTES[mode];
+
   const segments = useMemo(buildSegments, []);
-  // Per-group gain compensates for additive overdraw: the 256-fiber
-  // h1->h2 bundle would white out at the same gain as the sparser groups.
   const fiberGroups = useMemo(
-    () =>
-      segments.map((s, i) => makeFiberGroup(s, lowPower ? 3 : 5, [0.9, 0.5, 0.85][i])),
-    [segments, lowPower]
+    () => segments.map((s, i) => makeFiberGroup(s, lowPower ? 3 : 4, GROUP_GAINS[i], mode)),
+    [segments, lowPower, mode]
   );
 
-  // Dormant architecture: every connection as a faint hairline.
   const dormantLines = useMemo(() => {
     const pts: number[] = [];
-    for (const group of segments)
-      for (const { a, b } of group) pts.push(a.x, a.y, a.z, b.x, b.y, b.z);
+    for (const group of segments) for (const { a, b } of group) pts.push(a.x, a.y, a.z, b.x, b.y, b.z);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
     return new THREE.LineSegments(
       geo,
       new THREE.LineBasicMaterial({
-        color: new THREE.Color(PALETTE.trace),
+        color: new THREE.Color(p.graphite),
         transparent: true,
-        opacity: 0.22,
+        opacity: 0,
       })
     );
-  }, [segments]);
+  }, [segments, p.graphite]);
+  const lineTargetOpacity = mode === "light" ? 0.2 : 0.16;
 
-  // Nodes (16 + 16 + 10) + additive halos.
-  const nodePositions = useMemo(
-    () => [
-      ...Array.from({ length: 16 }, (_, i) => hiddenPos(LAYER_X.h1, i)),
-      ...Array.from({ length: 16 }, (_, i) => hiddenPos(LAYER_X.h2, i)),
-      ...Array.from({ length: 10 }, (_, i) => outputPos(i)),
-    ],
-    []
-  );
-  const { nodeMesh, haloMesh } = useMemo(() => {
-    const sphere = new THREE.SphereGeometry(1, lowPower ? 12 : 20, lowPower ? 12 : 20);
-    const nodeMesh = new THREE.InstancedMesh(
-      sphere,
-      new THREE.MeshBasicMaterial({ toneMapped: false }),
-      42
-    );
+  const nodePositions = useMemo(() => {
+    const arr: THREE.Vector3[] = [];
+    for (let l = 0; l < N_LAYERS; l++)
+      for (let i = 0; i < LAYER_SIZES[l]; i++) arr.push(nodePos(l, i));
+    return arr;
+  }, []);
+
+  const { nodeMesh, haloMesh, setNodeScales } = useMemo(() => {
+    const sphere = new THREE.SphereGeometry(1, lowPower ? 10 : 16, lowPower ? 10 : 16);
+    const nodeMesh = new THREE.InstancedMesh(sphere, new THREE.MeshBasicMaterial({ toneMapped: false }), NODE_COUNT);
     const haloMesh = new THREE.InstancedMesh(
       sphere,
       new THREE.MeshBasicMaterial({
@@ -239,59 +286,53 @@ function Network({ input, run, reducedMotion, lowPower }: NetworkSceneProps) {
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
-      42
+      NODE_COUNT
     );
+    haloMesh.visible = mode === "dark";
+    haloMesh.raycast = () => {};
     const m = new THREE.Matrix4();
-    nodePositions.forEach((p, k) => {
-      const r = k >= 32 ? 0.2 : 0.16;
-      m.makeScale(r, r, r).setPosition(p);
-      nodeMesh.setMatrixAt(k, m);
-      m.makeScale(r * 2.4, r * 2.4, r * 2.4).setPosition(p);
-      haloMesh.setMatrixAt(k, m);
-    });
-    const dormant = new THREE.Color(PALETTE.trace).multiplyScalar(0.85);
-    for (let k = 0; k < 42; k++) {
+    const setNodeScales = (perLayer: number[]) => {
+      for (let k = 0; k < NODE_COUNT; k++) {
+        const l = nodeLayer(k);
+        const r = NODE_R[l] * perLayer[l];
+        const pos = nodePositions[k];
+        m.makeScale(r, r, r).setPosition(pos);
+        nodeMesh.setMatrixAt(k, m);
+        m.makeScale(r * 2.3, r * 2.3, r * 2.3).setPosition(pos);
+        haloMesh.setMatrixAt(k, m);
+      }
+      nodeMesh.instanceMatrix.needsUpdate = true;
+      haloMesh.instanceMatrix.needsUpdate = true;
+    };
+    setNodeScales(new Array(N_LAYERS).fill(1));
+    const dormant = new THREE.Color(PALETTES[mode].graphite);
+    for (let k = 0; k < NODE_COUNT; k++) {
       nodeMesh.setColorAt(k, dormant);
       haloMesh.setColorAt(k, new THREE.Color(0, 0, 0));
     }
-    return { nodeMesh, haloMesh };
-  }, [nodePositions, lowPower]);
+    return { nodeMesh, haloMesh, setNodeScales };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodePositions, lowPower, mode]);
 
-  // Digit labels beside the output column, as canvas sprites (self-contained,
-  // no remote font fetch for the 3D text).
-  const labels = useMemo(() => {
-    const sprites: THREE.Sprite[] = [];
-    for (let d = 0; d < 10; d++) {
-      const canvas = document.createElement("canvas");
-      canvas.width = canvas.height = 128;
-      const draw = () => {
-        const ctx = canvas.getContext("2d")!;
-        ctx.clearRect(0, 0, 128, 128);
-        ctx.font = "600 84px 'IBM Plex Mono', monospace";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = "#ffffff";
-        ctx.fillText(String(d), 64, 68);
-      };
-      draw();
-      const map = new THREE.CanvasTexture(canvas);
-      if (typeof document !== "undefined" && document.fonts?.ready) {
-        document.fonts.ready.then(() => {
-          draw();
-          map.needsUpdate = true;
-        });
-      }
-      const sprite = new THREE.Sprite(
-        new THREE.SpriteMaterial({ map, transparent: true, depthWrite: false })
-      );
-      sprite.position.set(LAYER_X.out + 0.85, outputPos(d).y, 0);
-      sprite.scale.setScalar(0.42);
-      sprites.push(sprite);
-    }
-    return sprites;
+  const digitSprites = useMemo(() => {
+    return Array.from({ length: 10 }, (_, d) => {
+      const s = makeTextSprite(String(d), 84, 0.4);
+      s.position.set(LAYER_X[N_LAYERS] + 0.8, nodePos(N_LAYERS - 1, d).y, 0);
+      return s;
+    });
   }, []);
 
-  // Input plane: the drawn 28x28 image, tinted signal, entering the network.
+  const captionSprites = useMemo(() => {
+    const caps = ["your drawing", "64 neurons", "48 neurons", "32 neurons", "16 neurons", "10 digits"];
+    return caps.map((text, i) => {
+      const gridHalf =
+        i === 0 ? 2.2 : i === N_LAYERS ? 3.4 : ((GRIDS[i - 1].r - 1) / 2) * GRIDS[i - 1].dy + 0.8;
+      const s = makeTextSprite(text, 44, 0.28);
+      s.position.set(LAYER_X[i], -gridHalf - 0.5, 0);
+      return s;
+    });
+  }, []);
+
   const { planeMesh, planeTexture } = useMemo(() => {
     const data = new Uint8Array(28 * 28 * 4);
     const tex = new THREE.DataTexture(data, 28, 28, THREE.RGBAFormat);
@@ -305,112 +346,196 @@ function Network({ input, run, reducedMotion, lowPower }: NetworkSceneProps) {
       depthWrite: false,
     });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(PLANE_SIZE, PLANE_SIZE), mat);
-    mesh.position.set(LAYER_X.input, 0, 0);
+    mesh.position.set(LAYER_X[0], 0, 0);
     return { planeMesh: mesh, planeTexture: tex };
   }, []);
 
   const planeFrame = useMemo(() => {
-    const geo = new THREE.EdgesGeometry(new THREE.PlaneGeometry(PLANE_SIZE, PLANE_SIZE));
     const frame = new THREE.LineSegments(
-      geo,
-      new THREE.LineBasicMaterial({ color: new THREE.Color(PALETTE.trace), transparent: true, opacity: 0.7 })
+      new THREE.EdgesGeometry(new THREE.PlaneGeometry(PLANE_SIZE, PLANE_SIZE)),
+      new THREE.LineBasicMaterial({ color: new THREE.Color(p.graphite), transparent: true, opacity: 0.8 })
     );
-    frame.position.set(LAYER_X.input, 0, 0);
+    frame.position.set(LAYER_X[0], 0, 0);
     return frame;
-  }, []);
+  }, [p.graphite]);
 
-  // Ambient "marine snow" for depth; drifts only when motion is allowed.
-  const snow = useMemo(() => {
-    const n = lowPower ? 80 : 180;
-    const pts = new Float32Array(n * 3);
-    for (let i = 0; i < n; i++) {
-      pts[i * 3] = (Math.random() - 0.5) * 30;
-      pts[i * 3 + 1] = (Math.random() - 0.5) * 14;
-      pts[i * 3 + 2] = (Math.random() - 0.5) * 16;
-    }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.BufferAttribute(pts, 3));
-    return new THREE.Points(
-      geo,
-      new THREE.PointsMaterial({
-        color: new THREE.Color(PALETTE.trace),
-        size: 0.06,
-        transparent: true,
-        opacity: 0.45,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      })
-    );
-  }, [lowPower]);
-
-  // Write the drawn digit into the plane texture (rows flipped: MNIST row 0
-  // is the top of the image, texture row 0 is the bottom).
+  // drawn digit -> plane texture (texture row 0 is the image's bottom row)
   useEffect(() => {
     const data = planeTexture.image.data as Uint8Array;
-    const tint = new THREE.Color(PALETTE.signal);
+    const copper = new THREE.Color(p.copper);
+    const bg = new THREE.Color(p.paper);
     for (let row = 0; row < 28; row++) {
       for (let col = 0; col < 28; col++) {
         const v = input ? input[row * 28 + col] : 0;
         const o = ((27 - row) * 28 + col) * 4;
-        const boost = Math.min(1, v * 1.35);
-        data[o] = Math.round(255 * (tint.r * boost + (1 - boost) * 0.02));
-        data[o + 1] = Math.round(255 * (tint.g * boost + (1 - boost) * 0.04));
-        data[o + 2] = Math.round(255 * (tint.b * boost + (1 - boost) * 0.08));
-        data[o + 3] = v > 0.02 ? 255 : 40;
+        const c = bg.clone().lerp(copper, Math.min(1, v * 1.2));
+        data[o] = Math.round(c.r * 255);
+        data[o + 1] = Math.round(c.g * 255);
+        data[o + 2] = Math.round(c.b * 255);
+        data[o + 3] = v > 0.02 ? 255 : mode === "light" ? 60 : 40;
       }
     }
     planeTexture.needsUpdate = true;
-  }, [input, planeTexture]);
+  }, [input, planeTexture, p.copper, p.paper, mode]);
 
-  // Load a new run's real numbers into the fibers.
-  const runRef = useRef<RunState | null>(null);
-  const startRef = useRef<number | null>(null);
+  // load run values into fibers (also re-applies after a mode rebuild)
   useEffect(() => {
-    runRef.current = run;
-    startRef.current = null;
     if (!run) return;
-    for (let g = 0; g < 3; g++) applyEdgeValues(fiberGroups[g], run.edges[g]);
+    for (let g = 0; g < N_LAYERS; g++) applyEdgeValues(fiberGroups[g], run.edges[g]);
   }, [run, fiberGroups]);
 
-  // Per-frame animation: one clock drives edge pulses, node glow, labels.
-  const tmpColor = useMemo(() => new THREE.Color(), []);
-  const tmpColor2 = useMemo(() => new THREE.Color(), []);
-  const ramp = useMemo(() => {
-    const dormant = new THREE.Color(PALETTE.trace).multiplyScalar(0.85);
-    const signal = new THREE.Color(PALETTE.signal);
-    const core = new THREE.Color(PALETTE.core);
-    return (out: THREE.Color, v: number) => {
-      if (v <= 0.65) out.lerpColors(dormant, signal, v / 0.65);
-      else out.lerpColors(signal, core, Math.min(1, (v - 0.65) / 0.35));
+  // ---- pointer interaction ----
+  const setHover = useApp((s) => s.setHover);
+  const select = useApp((s) => s.select);
+
+  const onNodeMove = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    const k = e.instanceId;
+    if (k === undefined) return;
+    const l = nodeLayer(k);
+    const i = k - LAYER_OFFSETS[l];
+    const st = useApp.getState();
+    const acts = st.run?.result.layers[l];
+    const isOut = l === N_LAYERS - 1;
+    setHover({
+      x: e.nativeEvent.clientX,
+      y: e.nativeEvent.clientY,
+      title: isOut ? `the "${i}" output` : `layer ${l + 1}, neuron ${i}`,
+      lines: [
+        `activation: ${acts ? acts.a[i].toFixed(3) : "run something first"}`,
+        isOut
+          ? `probability: ${acts ? (acts.a[i] * 100).toFixed(1) + "%" : "—"}`
+          : `weighted sum: ${acts ? acts.z[i].toFixed(3) : "—"}`,
+        "click to open it up",
+      ],
+    });
+  };
+  const onNodeClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    const k = e.instanceId;
+    if (k === undefined) return;
+    const l = nodeLayer(k);
+    select({ kind: "node", layer: l + 1, index: k - LAYER_OFFSETS[l] });
+  };
+  const onFiberMove = (t: number) => (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    const k = e.instanceId;
+    if (k === undefined) return;
+    const st = useApp.getState();
+    if (!st.model) return;
+    if (t === 0) {
+      const cell = Math.floor(k / LAYER_SIZES[0]);
+      const i = k % LAYER_SIZES[0];
+      const flow = st.run?.edges[0][k];
+      setHover({
+        x: e.nativeEvent.clientX,
+        y: e.nativeEvent.clientY,
+        title: `image region ${cell} → neuron ${i}`,
+        lines: [`signal through here: ${flow !== undefined ? flow.toFixed(3) : "—"}`],
+      });
+      return;
+    }
+    const nIn = LAYER_SIZES[t - 1];
+    const i = Math.floor(k / nIn);
+    const j = k % nIn;
+    const w = st.model.layers[t].weights[i][j];
+    const flow = st.run?.edges[t][k];
+    setHover({
+      x: e.nativeEvent.clientX,
+      y: e.nativeEvent.clientY,
+      title: `a single weight`,
+      lines: [
+        `w = ${w.toFixed(3)}`,
+        `carrying: ${flow !== undefined ? flow.toFixed(3) : "—"}`,
+        "click for the full story",
+      ],
+    });
+  };
+  const onFiberClick = (t: number) => (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    const k = e.instanceId;
+    if (k === undefined || t === 0) return;
+    const nIn = LAYER_SIZES[t - 1];
+    select({ kind: "edge", transition: t, from: k % nIn, to: Math.floor(k / nIn) });
+  };
+  const clearHover = () => setHover(null);
+
+  // ---- per-frame animation ----
+  const groupRef = useRef<THREE.Group>(null);
+  const tRef = useRef(0);
+  const lastRunId = useRef(0);
+  const introStart = useRef<number | null>(null);
+  const introDone = useRef(false);
+
+  const colors = useMemo(() => {
+    const light = mode === "light";
+    return {
+      dormant: light
+        ? new THREE.Color(p.card).lerp(new THREE.Color(p.graphite), 0.75)
+        : new THREE.Color(p.graphite).multiplyScalar(0.85),
+      copper: new THREE.Color(p.copper),
+      ember: new THREE.Color(p.ember),
+      gold: new THREE.Color(p.gold),
+      inkDim: new THREE.Color(p.ink).multiplyScalar(light ? 1 : 0.55),
+      faint: new THREE.Color(p.faint),
     };
-  }, []);
-  const verdictColor = useMemo(() => new THREE.Color(PALETTE.verdict), []);
-  const signalColor = useMemo(() => new THREE.Color(PALETTE.signal), []);
-  const coreDim = useMemo(() => new THREE.Color(PALETTE.core).multiplyScalar(0.5), []);
+  }, [mode, p]);
+  const tmp = useMemo(() => new THREE.Color(), []);
+  const tmp2 = useMemo(() => new THREE.Color(), []);
+  const ramp = (out: THREE.Color, v: number) => {
+    if (v <= 0.65) out.lerpColors(colors.dormant, colors.copper, v / 0.65);
+    else out.lerpColors(colors.copper, colors.ember, Math.min(1, (v - 0.65) / 0.35));
+  };
 
   useFrame(({ clock }, delta) => {
-    const active = runRef.current;
-    let t = 0;
-    if (active) {
-      if (reducedMotion) {
-        t = 1;
+    const st = useApp.getState();
+
+    // assembly intro: layers scale in left to right
+    let introT = 1;
+    if (!introDone.current) {
+      if (st.reducedMotion) {
+        introDone.current = true;
       } else {
-        if (startRef.current === null) startRef.current = clock.elapsedTime;
-        t = Math.min(1, ((clock.elapsedTime - startRef.current) * 1000) / RUN_MS);
+        if (introStart.current === null) introStart.current = clock.elapsedTime;
+        introT = Math.min(1, ((clock.elapsedTime - introStart.current) * 1000) / INTRO_MS);
+        const w = (l: number) => stageProgress([0.08 + l * 0.13, 0.34 + l * 0.13], introT);
+        setNodeScales(Array.from({ length: N_LAYERS }, (_, l) => w(l)));
+        (planeMesh.material as THREE.MeshBasicMaterial).opacity = w(-0.5);
+        dormantLines.material.opacity = lineTargetOpacity * introT;
+        if (introT >= 1) introDone.current = true;
       }
     }
-
-    for (let g = 0; g < 3; g++) {
-      const sp = active ? stageProgress(EDGE_STAGES[g], t) : 0;
-      fiberGroups[g].material.uniforms.uPulse.value = active ? -0.2 + sp * 1.5 : -0.5;
+    if (introDone.current && dormantLines.material.opacity !== lineTargetOpacity) {
+      dormantLines.material.opacity = lineTargetOpacity;
+      setNodeScales(new Array(N_LAYERS).fill(1));
     }
 
-    const gates = [
-      active ? stageProgress(STAGES.hidden1, t) : 0,
-      active ? stageProgress(STAGES.hidden2, t) : 0,
-      active ? stageProgress(STAGES.output, t) : 0,
-    ];
-    const layers = active?.result.layers;
+    // run progress: monotonic, speed-scaled, capped by step checkpoints
+    const run = st.run;
+    if (run) {
+      if (run.id !== lastRunId.current) {
+        lastRunId.current = run.id;
+        tRef.current = run.instant ? 1 : 0;
+      }
+      if (st.settled || run.instant) {
+        tRef.current = 1;
+      } else {
+        const cap = st.stepMode ? STEP_CHECKPOINTS[st.stepIndex] : 1;
+        if (tRef.current < cap) {
+          tRef.current = Math.min(cap, tRef.current + (delta * 1000 * st.speed) / RUN_MS);
+        }
+        if (tRef.current >= 1) st.markSettled();
+      }
+    }
+    const t = run ? tRef.current : 0;
+
+    for (let g = 0; g < N_LAYERS; g++) {
+      const sp = run ? stageProgress(STAGES.edges[g], t) : 0;
+      fiberGroups[g].material.uniforms.uPulse.value = run ? -0.2 + sp * 1.5 : -0.5;
+    }
+
+    const layers = run?.result.layers;
+    const gates = STAGES.nodes.map((w) => (run ? stageProgress(w, t) : 0));
     const norm = (arr: Float32Array | undefined, i: number) => {
       if (!arr) return 0;
       let max = 0;
@@ -418,94 +543,113 @@ function Network({ input, run, reducedMotion, lowPower }: NetworkSceneProps) {
       return max > 0 ? arr[i] / max : 0;
     };
 
-    for (let k = 0; k < 42; k++) {
+    const lastL = N_LAYERS - 1;
+    for (let k = 0; k < NODE_COUNT; k++) {
+      const l = nodeLayer(k);
+      const i = k - LAYER_OFFSETS[l];
       let v = 0;
       let isWinner = false;
-      let settle = 0;
-      if (k < 16) v = norm(layers?.[0].a, k) * gates[0];
-      else if (k < 32) v = norm(layers?.[1].a, k - 16) * gates[1];
-      else {
-        const d = k - 32;
-        const p = layers ? layers[2].a[d] : 0;
-        settle = gates[2];
-        v = p * settle;
-        isWinner = !!active && d === active.result.prediction;
+      let settleP = 0;
+      if (l < lastL) {
+        v = norm(layers?.[l].a, i) * gates[l];
+      } else {
+        const prob = layers ? layers[lastL].a[i] : 0;
+        settleP = gates[lastL];
+        v = prob * settleP;
+        isWinner = !!run && i === run.result.prediction;
       }
-      ramp(tmpColor, v);
-      if (isWinner) tmpColor.lerp(verdictColor, settle * 0.9);
-      nodeMesh.setColorAt(k, tmpColor);
-
-      const haloStrength = isWinner ? v * 0.35 + settle * 0.45 : v * 0.35;
-      tmpColor2.copy(isWinner ? verdictColor : signalColor).multiplyScalar(haloStrength);
-      haloMesh.setColorAt(k, tmpColor2);
+      ramp(tmp, v);
+      if (isWinner) tmp.lerp(colors.gold, settleP * 0.9);
+      nodeMesh.setColorAt(k, tmp);
+      const haloStrength = isWinner ? v * 0.3 + settleP * 0.4 : v * 0.3;
+      tmp2.copy(isWinner ? colors.gold : colors.copper).multiplyScalar(haloStrength);
+      haloMesh.setColorAt(k, tmp2);
     }
     if (nodeMesh.instanceColor) nodeMesh.instanceColor.needsUpdate = true;
     if (haloMesh.instanceColor) haloMesh.instanceColor.needsUpdate = true;
 
     for (let d = 0; d < 10; d++) {
-      const mat = labels[d].material;
-      if (active && d === active.result.prediction && gates[2] > 0.5) {
-        mat.color.copy(verdictColor);
+      const mat = digitSprites[d].material;
+      if (run && d === run.result.prediction && gates[lastL] > 0.5) {
+        mat.color.copy(colors.gold);
         mat.opacity = 1;
       } else {
-        mat.color.copy(coreDim);
-        mat.opacity = 0.8;
+        mat.color.copy(colors.inkDim);
+        mat.opacity = 0.85;
       }
     }
+    for (const cap of captionSprites) {
+      cap.material.color.copy(colors.faint);
+      cap.material.opacity = 0.9 * (introDone.current ? 1 : introT);
+    }
 
-    (planeMesh.material as THREE.MeshBasicMaterial).opacity = input ? 1 : 0.5;
+    if (introDone.current) {
+      (planeMesh.material as THREE.MeshBasicMaterial).opacity = 1;
+    }
 
-    if (!reducedMotion) snow.rotation.y += delta * 0.008;
+    // scroll response: the graph leans and closes in as you read on
+    if (groupRef.current && scrollT) {
+      const s = st.reducedMotion ? 0 : scrollT.get();
+      groupRef.current.rotation.y = s * 0.45;
+      groupRef.current.position.z = s * 2.2;
+      groupRef.current.position.y = s * -0.6;
+    }
   });
 
   return (
-    // Shifted left so the output column clears the readout panel overlay.
-    <group position={[-0.9, 0, 0]}>
+    // nudged left so the output column clears the right-side panels at rest
+    <group ref={groupRef} position={[-0.7, 0, 0]}>
       <primitive object={dormantLines} />
       {fiberGroups.map((g, i) => (
-        <primitive key={i} object={g.mesh} />
+        <primitive
+          key={i}
+          object={g.mesh}
+          onPointerMove={onFiberMove(i)}
+          onPointerOut={clearHover}
+          onClick={onFiberClick(i)}
+        />
       ))}
-      <primitive object={nodeMesh} />
+      <primitive
+        object={nodeMesh}
+        onPointerMove={onNodeMove}
+        onPointerOut={clearHover}
+        onClick={onNodeClick}
+      />
       <primitive object={haloMesh} />
       <primitive object={planeMesh} />
       <primitive object={planeFrame} />
-      {labels.map((s, i) => (
-        <primitive key={i} object={s} />
+      {digitSprites.map((s, i) => (
+        <primitive key={`d${i}`} object={s} />
       ))}
-      <primitive object={snow} />
+      {captionSprites.map((s, i) => (
+        <primitive key={`c${i}`} object={s} />
+      ))}
     </group>
   );
 }
 
-function SceneSetup() {
-  const { gl } = useThree();
-  useEffect(() => {
-    gl.setClearColor(new THREE.Color(PALETTE.abyss));
-  }, [gl]);
-  return (
-    <>
-      <fog attach="fog" args={[PALETTE.abyss, 16, 30]} />
-    </>
-  );
-}
-
-export default function NetworkScene(props: NetworkSceneProps) {
+export default function NetworkScene({ scrollT }: NetworkProps) {
+  const mode = useApp((s) => s.mode);
+  const reducedMotion = useApp((s) => s.reducedMotion);
+  const lowPower = useApp((s) => s.lowPower);
+  const p = PALETTES[mode];
   return (
     <Canvas
-      camera={{ position: props.lowPower ? [3, 2, 19] : [3.6, 2.3, 13.6], fov: 40 }}
-      dpr={props.lowPower ? [1, 1.25] : [1, 1.75]}
+      camera={{ position: lowPower ? [2.6, 1.8, 26] : [3.2, 2, 20], fov: 40 }}
+      dpr={lowPower ? [1, 1.25] : [1, 1.75]}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       className="!absolute inset-0"
     >
-      <SceneSetup />
-      <Network {...props} />
+      <color attach="background" args={[p.paper]} />
+      <fog attach="fog" args={lowPower ? [p.paper, 28, 50] : [p.paper, 21, 40]} />
+      <Network scrollT={scrollT} />
       <OrbitControls
         makeDefault
         enablePan={false}
-        autoRotate={!props.reducedMotion}
-        autoRotateSpeed={0.25}
-        minDistance={6}
-        maxDistance={22}
+        autoRotate={!reducedMotion}
+        autoRotateSpeed={0.2}
+        minDistance={8}
+        maxDistance={32}
         maxPolarAngle={Math.PI * 0.85}
       />
     </Canvas>

@@ -20,15 +20,19 @@ OUT_PATH = os.path.join(HERE, "weights.json")
 class TinyNet(nn.Module):
     def __init__(self):
         super().__init__()
-        self.fc1 = nn.Linear(784, 16)
-        self.fc2 = nn.Linear(16, 16)
-        self.fc3 = nn.Linear(16, 10)
+        self.fc1 = nn.Linear(784, 64)
+        self.fc2 = nn.Linear(64, 48)
+        self.fc3 = nn.Linear(48, 32)
+        self.fc4 = nn.Linear(32, 16)
+        self.fc5 = nn.Linear(16, 10)
 
     def forward(self, x):
         x = x.view(x.size(0), -1)
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
-        return self.fc3(x)  # logits; softmax applied at inference
+        x = torch.relu(self.fc3(x))
+        x = torch.relu(self.fc4(x))
+        return self.fc5(x)  # logits; softmax applied at inference
 
 
 def main():
@@ -61,7 +65,7 @@ def main():
         print(f"epoch {epoch + 1}: test accuracy {correct / total:.4f}", flush=True)
 
     layers = []
-    for fc in (model.fc1, model.fc2, model.fc3):
+    for fc in (model.fc1, model.fc2, model.fc3, model.fc4, model.fc5):
         layers.append({
             # weight shape [out, in]: weights[i][j] connects input j -> output i
             "weights": [[round(w, 6) for w in row] for row in fc.weight.tolist()],

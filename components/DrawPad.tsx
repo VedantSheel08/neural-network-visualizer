@@ -2,7 +2,8 @@
 
 import { useCallback, useImperativeHandle, useRef, type Ref } from "react";
 import { canvasToModelInput } from "@/lib/preprocess";
-import { PALETTE } from "@/lib/theme";
+import { PALETTES } from "@/lib/theme";
+import { useApp } from "@/lib/store";
 
 const PAD_SIZE = 280;
 
@@ -11,13 +12,17 @@ export interface DrawPadHandle {
 }
 
 interface DrawPadProps {
-  /** Fired (throttled) with the 784-vector the model will see, or null when cleared. */
-  onInputChange: (input: Float32Array | null) => void;
-  disabled?: boolean;
   ref?: Ref<DrawPadHandle>;
 }
 
-export default function DrawPad({ onInputChange, disabled, ref }: DrawPadProps) {
+/**
+ * 280px pad downsampled to the 28x28 MNIST frame. Strokes are stored white
+ * internally (the preprocessing pipeline reads luminance); in light mode a
+ * CSS invert renders them as ink on paper.
+ */
+export default function DrawPad({ ref }: DrawPadProps) {
+  const mode = useApp((s) => s.mode);
+  const setInput = useApp((s) => s.setInput);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const previewRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
@@ -32,25 +37,26 @@ export default function DrawPad({ onInputChange, disabled, ref }: DrawPadProps) 
       const canvas = canvasRef.current;
       if (!canvas) return;
       const { input, empty } = canvasToModelInput(canvas);
-      onInputChange(empty ? null : input);
+      setInput(empty ? null : input);
 
-      // Live preview of exactly what the model will see after downsampling.
       const preview = previewRef.current;
       const ctx = preview?.getContext("2d");
       if (!preview || !ctx) return;
+      const copper = PALETTES[useApp.getState().mode].copper;
+      const r = parseInt(copper.slice(1, 3), 16);
+      const g = parseInt(copper.slice(3, 5), 16);
+      const b = parseInt(copper.slice(5, 7), 16);
       const img = ctx.createImageData(28, 28);
-      const [r, g, b] = [0x5f, 0xd4, 0xf5]; // signal
       for (let i = 0; i < 784; i++) {
-        const v = input[i];
         img.data[i * 4] = r;
         img.data[i * 4 + 1] = g;
         img.data[i * 4 + 2] = b;
-        img.data[i * 4 + 3] = Math.round(v * 255);
+        img.data[i * 4 + 3] = Math.round(input[i] * 255);
       }
       ctx.clearRect(0, 0, 28, 28);
       ctx.putImageData(img, 0, 0);
     });
-  }, [onInputChange]);
+  }, [setInput]);
 
   const pointFromEvent = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -64,7 +70,8 @@ export default function DrawPad({ onInputChange, disabled, ref }: DrawPadProps) 
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
     const from = lastPoint.current ?? point;
-    ctx.strokeStyle = "#ffffff";
+    // Coverage lives in alpha; color is purely presentational per mode.
+    ctx.strokeStyle = PALETTES[useApp.getState().mode].ink;
     ctx.lineWidth = 20;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -76,20 +83,17 @@ export default function DrawPad({ onInputChange, disabled, ref }: DrawPadProps) 
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (disabled) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     drawing.current = true;
     lastPoint.current = null;
     strokeTo(pointFromEvent(e));
     emitInput();
   };
-
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!drawing.current) return;
     strokeTo(pointFromEvent(e));
     emitInput();
   };
-
   const handlePointerUp = () => {
     drawing.current = false;
     lastPoint.current = null;
@@ -99,20 +103,18 @@ export default function DrawPad({ onInputChange, disabled, ref }: DrawPadProps) 
   useImperativeHandle(ref, () => ({
     clear() {
       const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
       previewRef.current?.getContext("2d")?.clearRect(0, 0, 28, 28);
-      onInputChange(null);
+      setInput(null);
     },
   }));
 
+  const grid = PALETTES[mode].graphite;
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-end justify-between">
-        <span className="text-[10px] uppercase tracking-[0.2em] text-signal/70">
-          Input — draw a digit
-        </span>
-        <span className="text-[10px] tracking-wider text-trace">28×28</span>
+        <span className="text-[13px] font-medium text-ink">draw a number here (0–9)</span>
+        <span className="font-mono text-[10px] text-faint">28×28</span>
       </div>
 
       <div className="relative">
@@ -124,11 +126,11 @@ export default function DrawPad({ onInputChange, disabled, ref }: DrawPadProps) 
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
-          className="w-full max-w-[280px] aspect-square rounded-sm border border-trace/60 bg-abyss touch-none cursor-crosshair"
+          className="w-full max-w-[280px] aspect-square rounded-sm border border-graphite/60 touch-none cursor-crosshair bg-paper"
           style={{
             backgroundImage:
-              `linear-gradient(${PALETTE.trace}22 1px, transparent 1px),` +
-              `linear-gradient(90deg, ${PALETTE.trace}22 1px, transparent 1px)`,
+              `linear-gradient(${grid}33 1px, transparent 1px),` +
+              `linear-gradient(90deg, ${grid}33 1px, transparent 1px)`,
             backgroundSize: "10% 10%",
           }}
           aria-label="Drawing pad: draw a digit from 0 to 9"
@@ -138,10 +140,10 @@ export default function DrawPad({ onInputChange, disabled, ref }: DrawPadProps) 
             ref={previewRef}
             width={28}
             height={28}
-            className="w-14 h-14 pixelated rounded-[2px] border border-trace/60 bg-abyss/80"
+            className="w-14 h-14 pixelated rounded-[2px] border border-graphite/60 bg-paper/90"
             aria-label="Preview of the 28 by 28 image the model receives"
           />
-          <span className="text-[9px] tracking-wider text-trace">model view</span>
+          <span className="font-mono text-[9px] text-faint">what it sees</span>
         </div>
       </div>
     </div>

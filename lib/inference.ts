@@ -70,16 +70,34 @@ export function softmax(z: Float32Array): Float32Array {
 }
 
 /**
+ * Manual override for perturbation mode: clamp one hidden layer's
+ * post-activation to a chosen value and let the change ripple downstream.
+ * `layer` is 1-based over activation layers (1 = first hidden layer).
+ */
+export interface ActivationOverride {
+  layer: number;
+  index: number;
+  value: number;
+}
+
+/**
  * Run the full forward pass, returning every intermediate layer's state so
  * the visualization can animate real propagation, not a canned sequence.
  */
-export function forwardPass(model: ModelWeights, input: Float32Array): ForwardResult {
+export function forwardPass(
+  model: ModelWeights,
+  input: Float32Array,
+  override?: ActivationOverride | null
+): ForwardResult {
   const layers: LayerActivations[] = [];
   let x = input;
   for (let l = 0; l < model.layers.length; l++) {
     const z = matVec(model.layers[l], x);
     const isLast = l === model.layers.length - 1;
     const a = isLast ? softmax(z) : relu(z);
+    if (override && override.layer === l + 1 && !isLast) {
+      a[override.index] = override.value;
+    }
     layers.push({ z, a });
     x = a;
   }

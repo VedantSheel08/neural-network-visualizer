@@ -1,44 +1,126 @@
 @import "tailwindcss";
 
-/*
- * Signal in deep water: a forward pass as bioluminescent ink propagating
- * through darkness. Amber (--color-verdict) is reserved for the prediction.
- */
-@theme {
-  --color-abyss: #060b14;
-  --color-hull: #0d1524;
-  --color-trace: #26374f;
-  --color-signal: #5fd4f5;
-  --color-core: #eaf8ff;
-  --color-verdict: #ffaf5f;
+@custom-variant dark (&:where(.dark, .dark *));
 
-  --font-display: var(--font-chakra), sans-serif;
-  --font-mono: var(--font-plex-mono), monospace;
+/*
+ * Plain and quiet on purpose. Neutral grays, one warm accent for anything
+ * "on", and nothing else. Light and dark are both just ink on a surface.
+ */
+:root {
+  --paper: #fcfcfa;
+  --card: #f3f3ee;
+  --graphite: #d9d9d1;
+  --ink: #191917;
+  --faint: #75756d;
+  --copper: #d4551a;
+  --ember: #7a2e08;
+  --gold: #8f3a0e;
+  color-scheme: light;
+}
+
+.dark {
+  --paper: #131312;
+  --card: #1c1c1a;
+  --graphite: #3b3b37;
+  --ink: #ebebe7;
+  --faint: #8f8f87;
+  --copper: #ff7a3d;
+  --ember: #ffd9c0;
+  --gold: #ffb37a;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-card: var(--card);
+  --color-graphite: var(--graphite);
+  --color-ink: var(--ink);
+  --color-faint: var(--faint);
+  --color-copper: var(--copper);
+  --color-ember: var(--ember);
+  --color-gold: var(--gold);
+
+  /* system stacks: loads nothing, looks like a person's site */
+  --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
 }
 
 body {
-  background: var(--color-abyss);
-  color: var(--color-core);
-  font-family: var(--font-mono);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+.theme-anim,
+.theme-anim * {
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease !important;
 }
 
 ::selection {
-  background: var(--color-signal);
-  color: var(--color-abyss);
+  background: var(--copper);
+  color: var(--paper);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-signal);
+  outline: 2px solid var(--copper);
   outline-offset: 2px;
 }
 
-/* Instrument-panel surface used by the chrome around the visualization. */
+/* plain box. no blur, no glass. */
 .panel {
-  background: color-mix(in srgb, var(--color-hull) 82%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-trace) 60%, transparent);
-  backdrop-filter: blur(10px);
+  background: var(--card);
+  border: 1px solid var(--graphite);
 }
 
 .pixelated {
   image-rendering: pixelated;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--graphite) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--graphite);
+  border: 3px solid var(--paper);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
+}
+.katex {
+  font-size: 1.05em;
+}
+
+input[type="range"] {
+  accent-color: var(--copper);
+}
+
+/* dotted-underline word that explains itself on hover/tap */
+.term {
+  text-decoration: underline dotted var(--faint);
+  text-underline-offset: 3px;
+  cursor: help;
+}
+
+a.plain {
+  color: var(--copper);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+a.plain:hover {
+  color: var(--ember);
 }

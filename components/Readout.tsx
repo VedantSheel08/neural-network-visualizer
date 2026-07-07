@@ -1,67 +1,77 @@
 "use client";
 
-import type { ForwardResult } from "@/lib/inference";
+import { useApp } from "@/lib/store";
 
-// Bar fills validated against the #0D1524 panel surface (dataviz six checks).
-// Brighter palette tokens stay reserved for glows and text accents.
-const BAR_FILL = "#2E9FCE";
-const BAR_FILL_WINNER = "#D07F2E";
-
-interface ReadoutProps {
-  result: ForwardResult | null;
-  /** False while the propagation animation is still traveling. */
-  settled: boolean;
-}
-
-export default function Readout({ result, settled }: ReadoutProps) {
+/**
+ * The answer panel. One hue for the bars (single series); the winner is the
+ * full-opacity one with bold labels. Everything here is the actual softmax
+ * output of the last run.
+ */
+export default function Readout() {
+  const run = useApp((s) => s.run);
+  const settled = useApp((s) => s.settled);
+  const override = useApp((s) => s.override);
+  const result = run?.result ?? null;
   const show = result !== null && settled;
   const probs = result ? Array.from(result.probabilities) : new Array<number>(10).fill(0);
 
   return (
     <div className="flex flex-col gap-4" aria-live="polite">
-      <div className="flex items-baseline justify-between">
-        <span className="text-[10px] uppercase tracking-[0.2em] text-signal/70">Output</span>
-        <span className="text-[10px] tracking-wider text-trace">softmax · 10 classes</span>
-      </div>
+      <span className="text-[13px] font-medium text-ink">what it thinks you drew</span>
 
       <div className="flex items-center gap-4">
         <div
-          className="w-20 h-20 shrink-0 rounded-sm border border-trace/60 bg-abyss grid place-items-center font-display text-5xl"
-          style={{ color: show ? "var(--color-verdict)" : "var(--color-trace)" }}
+          className="w-20 h-20 shrink-0 rounded border border-graphite bg-paper grid place-items-center font-mono text-5xl"
+          style={{ color: show ? "var(--gold)" : "var(--graphite)" }}
         >
-          {show ? result.prediction : "—"}
+          {show ? result.prediction : "?"}
         </div>
-        <div className="flex flex-col gap-1 min-w-0">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-trace">prediction</span>
-          <span className="font-display text-xl text-core">
-            {show ? `${(result.confidence * 100).toFixed(1)}%` : result ? "propagating…" : "awaiting signal"}
+        <div className="flex flex-col gap-0.5 min-w-0 text-[12px]">
+          <span className="font-mono text-2xl tabular-nums text-ink">
+            {show ? `${(result.confidence * 100).toFixed(1)}%` : "--"}
           </span>
-          <span className="text-[10px] text-trace">
-            {show ? "confidence" : result ? "" : "draw a digit, then run"}
+          <span className="text-faint">
+            {show
+              ? override
+                ? "sure (but you're messing with a neuron right now)"
+                : "sure"
+              : result
+                ? "thinking…"
+                : "waiting for a drawing"}
           </span>
         </div>
       </div>
 
-      <div className="flex flex-col gap-[6px]" role="img" aria-label="Probability for each digit 0 through 9">
-        {probs.map((p, digit) => {
+      <div className="flex flex-col gap-[5px]" role="img" aria-label="probability for each digit, 0 through 9">
+        {probs.map((prob, digit) => {
           const isWinner = show && digit === result.prediction;
-          const width = show ? Math.max(p * 100, 0.5) : 0.5;
+          const width = show ? Math.max(prob * 100, 0.75) : 0.75;
           return (
-            <div key={digit} className="flex items-center gap-2 text-[11px]">
-              <span className={`w-3 text-right ${isWinner ? "text-verdict" : "text-core/60"}`}>{digit}</span>
-              <div className="flex-1 h-[10px] bg-abyss rounded-[3px] overflow-hidden">
+            <div key={digit} className="flex items-center gap-2 font-mono text-[11px]">
+              <span className={`w-3 text-right ${isWinner ? "text-gold font-bold" : "text-faint"}`}>
+                {digit}
+              </span>
+              <div className="flex-1 h-[9px] bg-paper rounded-[3px] overflow-hidden border border-graphite/50">
                 <div
-                  className="h-full rounded-[3px] transition-[width] duration-500 motion-reduce:transition-none"
-                  style={{ width: `${width}%`, background: isWinner ? BAR_FILL_WINNER : BAR_FILL }}
+                  className={`h-full bg-copper transition-[width] duration-500 motion-reduce:transition-none ${
+                    isWinner ? "" : "opacity-55"
+                  }`}
+                  style={{ width: `${width}%` }}
                 />
               </div>
-              <span className={`w-11 text-right tabular-nums ${isWinner ? "text-verdict" : "text-trace"}`}>
-                {show ? `${(p * 100).toFixed(1)}%` : "·"}
+              <span className={`w-12 text-right tabular-nums ${isWinner ? "text-gold font-bold" : "text-faint"}`}>
+                {show ? `${(prob * 100).toFixed(1)}%` : "·"}
               </span>
             </div>
           );
         })}
       </div>
+      {show && (
+        <p className="text-[11px] leading-relaxed text-faint">
+          these ten numbers always add up to 100%. that&apos;s the softmax step
+          — more on it below.
+        </p>
+      )}
     </div>
   );
 }

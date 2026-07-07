@@ -1,24 +1,29 @@
 import type { Metadata } from "next";
-import { Chakra_Petch, IBM_Plex_Mono } from "next/font/google";
+import "katex/dist/katex.min.css";
 import "./globals.css";
 
-const chakra = Chakra_Petch({
-  variable: "--font-chakra",
-  weight: ["400", "600", "700"],
-  subsets: ["latin"],
-});
-
-const plexMono = IBM_Plex_Mono({
-  variable: "--font-plex-mono",
-  weight: ["400", "500", "600"],
-  subsets: ["latin"],
-});
+const description =
+  "vedant sheel trained a neural network and put it in your browser. draw a digit, watch the actual math happen, and poke at every weight yourself.";
 
 export const metadata: Metadata = {
-  title: "Forward Pass — Live Neural Inference",
-  description:
-    "Draw a digit and watch a real trained network classify it — every pulse driven by an actual forward pass running in your browser.",
+  title: "vedant sheel · neural network",
+  description,
+  authors: [{ name: "Vedant Sheel" }],
+  openGraph: {
+    title: "vedant sheel · neural network",
+    description,
+    siteName: "vedant sheel",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "vedant sheel · neural network",
+    description,
+  },
 };
+
+// runs before paint so a stored theme choice never flashes the wrong mode
+const themeInit = `(function(){try{var t=localStorage.getItem("fp-theme");var d=t?t==="dark":true;document.documentElement.classList.toggle("dark",d);}catch(e){document.documentElement.classList.add("dark");}})();`;
 
 export default function RootLayout({
   children,
@@ -26,7 +31,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${chakra.variable} ${plexMono.variable} h-full antialiased`}>
+    <html lang="en" suppressHydrationWarning className="h-full antialiased">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
+      </head>
       <body className="min-h-full">{children}</body>
     </html>
   );

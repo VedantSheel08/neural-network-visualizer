@@ -18,15 +18,13 @@ export function canvasToModelInput(source: HTMLCanvasElement): ProcessedInput {
   const { width, height } = source;
   const data = ctx.getImageData(0, 0, width, height).data;
 
-  // Bounding box of drawn ink (drawing is white-on-transparent-black; use
-  // alpha * luminance so both stroke styles work).
+  // Bounding box of drawn ink. Ink coverage is the alpha channel (the pad
+  // starts transparent), so stroke color is free to match the theme.
   let minX = width, minY = height, maxX = -1, maxY = -1;
-  const lum = new Float32Array(width * height);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const idx = (y * width + x) * 4;
-      const v = (data[idx] / 255) * (data[idx + 3] / 255);
-      lum[y * width + x] = v;
+      const v = data[idx + 3] / 255;
       if (v > 0.05) {
         if (x < minX) minX = x;
         if (x > maxX) maxX = x;
@@ -59,7 +57,7 @@ export function canvasToModelInput(source: HTMLCanvasElement): ProcessedInput {
   for (let y = 0; y < scaledH; y++) {
     for (let x = 0; x < scaledW; x++) {
       const idx = (y * scaledW + x) * 4;
-      const v = (cropData[idx] / 255) * (cropData[idx + 3] / 255);
+      const v = cropData[idx + 3] / 255;
       mass += v;
       mx += v * x;
       my += v * y;
@@ -77,7 +75,7 @@ export function canvasToModelInput(source: HTMLCanvasElement): ProcessedInput {
   const out = new Float32Array(784);
   const frameData = frameCtx.getImageData(0, 0, 28, 28).data;
   for (let i = 0; i < 784; i++) {
-    out[i] = (frameData[i * 4] / 255) * (frameData[i * 4 + 3] / 255);
+    out[i] = frameData[i * 4 + 3] / 255;
   }
   return { input: out, empty: false };
 }
