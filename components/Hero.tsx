@@ -11,6 +11,7 @@ import HoverTip from "@/components/HoverTip";
 import Inspector from "@/components/Inspector";
 import Readout from "@/components/Readout";
 import ThemeToggle from "@/components/ThemeToggle";
+import Tour from "@/components/Tour";
 import { useApp } from "@/lib/store";
 
 const NetworkScene = dynamic(() => import("@/components/NetworkScene"), {
@@ -34,6 +35,8 @@ export default function Hero() {
   const input = useApp((s) => s.input);
   const execute = useApp((s) => s.execute);
   const reducedMotion = useApp((s) => s.reducedMotion);
+  const tour = useApp((s) => s.tour);
+  const setTour = useApp((s) => s.setTour);
 
   const { scrollYProgress } = useScroll({
     target: wrapRef,
@@ -78,6 +81,15 @@ export default function Hero() {
               </a>
               <span className="font-mono"> · vedant.sheel [at] uwaterloo [dot] com</span>
             </p>
+            {tour === null && (
+              <button
+                type="button"
+                onClick={() => setTour(0)}
+                className="mt-3 px-4 py-2 text-[14px] font-medium bg-copper text-paper hover:bg-ember pointer-events-auto"
+              >
+                new here? walk me through it
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-3 pointer-events-auto">
             <span className="hidden md:inline font-mono text-[12px] text-faint">
@@ -145,24 +157,29 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="hidden md:block absolute bottom-16 left-1/2 -translate-x-1/2 z-10 panel px-3 py-2">
-          <FocusBar />
-        </div>
+        {tour === null && (
+          <div className="hidden md:block absolute bottom-16 left-1/2 -translate-x-1/2 z-10 panel px-3 py-2">
+            <FocusBar />
+          </div>
+        )}
 
-        <button
-          type="button"
-          onClick={() =>
-            document.getElementById("machine")?.scrollIntoView({
-              behavior: reducedMotion ? "auto" : "smooth",
-            })
-          }
-          className="self-center my-3 md:my-0 md:absolute md:bottom-4 md:left-1/2 md:-translate-x-1/2 z-10 px-5 py-2.5 text-[15px] md:text-base text-ink bg-paper border border-ink/30 hover:border-copper hover:text-copper"
-        >
-          so how does it actually work? ↓
-        </button>
+        {tour === null && (
+          <button
+            type="button"
+            onClick={() =>
+              document.getElementById("machine")?.scrollIntoView({
+                behavior: reducedMotion ? "auto" : "smooth",
+              })
+            }
+            className="self-center my-3 md:my-0 md:absolute md:bottom-4 md:left-1/2 md:-translate-x-1/2 z-10 px-5 py-2.5 text-[15px] md:text-base text-ink bg-paper border border-ink/30 hover:border-copper hover:text-copper"
+          >
+            so how does it actually work? ↓
+          </button>
+        )}
       </section>
 
       <HoverTip />
+      <Tour />
     </div>
   );
 }

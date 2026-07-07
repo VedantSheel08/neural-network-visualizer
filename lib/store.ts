@@ -82,6 +82,10 @@ interface AppState {
   focus: number | null;
   setFocus(f: number | null): void;
 
+  /** guided walkthrough: null = off, otherwise the current step index */
+  tour: number | null;
+  setTour(t: number | null): void;
+
   selection: Selection | null;
   select(s: Selection | null): void;
   hover: { x: number; y: number; title: string; lines: string[] } | null;
@@ -195,6 +199,11 @@ export const useApp = create<AppState>((set, get) => ({
   focus: null,
   setFocus(focus) {
     set({ focus });
+  },
+
+  tour: null,
+  setTour(tour) {
+    set({ tour });
   },
 
   selection: null,
