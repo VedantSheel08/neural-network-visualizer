@@ -28,7 +28,7 @@ export default function Term({ d, children }: { d: string; children: React.React
         <span
           id={id}
           role="tooltip"
-          className="absolute left-1/2 bottom-full z-40 mb-1.5 w-60 -translate-x-1/2 rounded panel px-3 py-2 text-[12px] leading-relaxed text-ink shadow-sm normal-case font-normal"
+          className="absolute left-1/2 bottom-full z-40 mb-1.5 w-60 -translate-x-1/2 panel border border-graphite px-3 py-2 text-[12px] leading-relaxed text-ink normal-case font-normal"
         >
           {d}
         </span>

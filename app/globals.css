@@ -40,9 +40,11 @@
   --color-ember: var(--ember);
   --color-gold: var(--gold);
 
-  /* georgia and courier. loads nothing, looks like a person made it. */
+  /* one normal serif for everything, including numbers. no typewriter
+     font, no coding font, just the same face a person would actually
+     write in. */
   --font-body: Georgia, "Times New Roman", serif;
-  --font-mono: "Courier New", Courier, monospace;
+  --font-mono: Georgia, "Times New Roman", serif;
 }
 
 /* square corners everywhere. rounded everything is a template smell. */
@@ -74,10 +76,10 @@ body {
   outline-offset: 2px;
 }
 
-/* plain solid surface with a thin ink rule. no blur, no glass, no card. */
+/* a plain filled patch of page, not a bordered card. the faint tonal
+   shift from the surface behind it is the only cue there's a boundary. */
 .panel {
-  background: var(--paper);
-  border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  background: var(--card);
 }
 
 .pixelated {

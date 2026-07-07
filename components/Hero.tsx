@@ -66,11 +66,14 @@ export default function Hero() {
         <motion.header
           {...panel}
           transition={{ duration: 0.4 }}
-          className="absolute top-0 inset-x-0 z-20 flex items-start justify-between gap-4 px-4 md:px-7 py-4 pointer-events-none"
+          className="absolute top-0 inset-x-0 z-20 px-4 md:px-7 py-4 pointer-events-none"
         >
-          <div>
+          <div className="flex justify-end pointer-events-auto">
+            <ThemeToggle />
+          </div>
+          <div className="mt-1 flex flex-col items-center text-center">
             <h1 className="text-3xl md:text-4xl font-bold text-ink lowercase">vedant sheel</h1>
-            <p className="mt-1.5 text-[15px] md:text-base text-ink/80 max-w-[400px] leading-snug">
+            <p className="mt-1.5 text-[15px] md:text-base text-ink/80 max-w-[440px] leading-snug">
               i trained a neural network and put it in your browser. draw a
               number, hit run, and watch it actually think. everything you see
               is real math happening live, and you can click all of it.
@@ -79,7 +82,10 @@ export default function Hero() {
               <a className="plain" href="https://vedantsheel.com" target="_blank" rel="noopener noreferrer">
                 vedantsheel.com
               </a>
-              <span className="font-mono"> · vedant.sheel [at] uwaterloo [dot] com</span>
+              <span> · vedant.sheel [at] uwaterloo [dot] com</span>
+            </p>
+            <p className="mt-1 text-[12px] text-faint">
+              784→64→48→32→16→10, 96.9% accurate
             </p>
             {tour === null && (
               <button
@@ -90,12 +96,6 @@ export default function Hero() {
                 new here? walk me through it
               </button>
             )}
-          </div>
-          <div className="flex items-center gap-3 pointer-events-auto">
-            <span className="hidden md:inline font-mono text-[12px] text-faint">
-              784→64→48→32→16→10, 96.9% accurate
-            </span>
-            <ThemeToggle />
           </div>
         </motion.header>
 

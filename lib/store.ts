@@ -96,7 +96,7 @@ interface AppState {
 }
 
 export const useApp = create<AppState>((set, get) => ({
-  mode: "dark",
+  mode: "light",
   setMode(mode) {
     set({ mode });
     if (typeof document !== "undefined") {

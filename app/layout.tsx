@@ -22,8 +22,9 @@ export const metadata: Metadata = {
   },
 };
 
-// runs before paint so a stored theme choice never flashes the wrong mode
-const themeInit = `(function(){try{var t=localStorage.getItem("fp-theme");var d=t?t==="dark":true;document.documentElement.classList.toggle("dark",d);}catch(e){document.documentElement.classList.add("dark");}})();`;
+// runs before paint so a stored theme choice never flashes the wrong mode.
+// light is the default the first time anyone visits.
+const themeInit = `(function(){try{var t=localStorage.getItem("fp-theme");var d=t==="dark";document.documentElement.classList.toggle("dark",d);}catch(e){}})();`;
 
 export default function RootLayout({
   children,
