@@ -664,9 +664,9 @@ function Network({ scrollT }: NetworkProps) {
         const fx = overview ? 0 : LAYER_X[st.focus] - 0.7;
         focusTarget.set(overview ? 0 : fx, 0, 0);
         focusPos.set(
-          overview ? 3.2 : fx + 1.4,
-          overview ? 2 : 1.1,
-          overview ? (st.lowPower ? 26 : 20) : st.focus === 0 || st.focus === 5 ? 6.5 : 8
+          overview ? 3.2 : fx + 1.2,
+          overview ? 2 : 0.8,
+          overview ? (st.lowPower ? 26 : 20) : st.focus === 0 ? 6.5 : st.focus === 5 ? 10 : 9.5
         );
         const ease = st.reducedMotion ? 1 : 0.07;
         orbit.target.lerp(focusTarget, ease);
