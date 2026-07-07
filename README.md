@@ -1,5 +1,7 @@
 # neural network visualizer
 
+i made this for fun because i was bored one weekend lol. it kind of spiraled.
+
 so this is a neural network that actually runs in your browser. you draw a
 digit, 0 through 9, hit run, and you get to watch the real math happen step
 by step, all the way from your pixels to a final answer. no server involved,
@@ -13,7 +15,7 @@ myself in typescript. everything you see on the page, the glowing dots, the
 lines lighting up, the percentages, all of it comes straight from that
 computation happening on your machine. nothing is faked or pre-rendered.
 
-check it out live at [vedantsheel.com](https://vedantsheel.com)
+check it out live at [neuralnetworkvisualizer.org](https://www.neuralnetworkvisualizer.org/)
 
 ## what's actually going on
 
