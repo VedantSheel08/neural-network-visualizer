@@ -75,6 +75,13 @@ interface AppState {
   stepIndex: number;
   nextStep(): void;
 
+  /**
+   * Camera focus: 0 = the drawing, 1..4 = hidden layers, 5 = the answer,
+   * -1 = fly back to the overview, null = free look.
+   */
+  focus: number | null;
+  setFocus(f: number | null): void;
+
   selection: Selection | null;
   select(s: Selection | null): void;
   hover: { x: number; y: number; title: string; lines: string[] } | null;
@@ -183,6 +190,11 @@ export const useApp = create<AppState>((set, get) => ({
   stepIndex: 0,
   nextStep() {
     set({ stepIndex: Math.min(get().stepIndex + 1, STEP_CHECKPOINTS.length - 1) });
+  },
+
+  focus: null,
+  setFocus(focus) {
+    set({ focus });
   },
 
   selection: null,

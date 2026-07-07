@@ -5,6 +5,7 @@ import { motion, useReducedMotion, useScroll } from "framer-motion";
 import { useEffect, useRef } from "react";
 import Controls from "@/components/Controls";
 import DrawPad, { type DrawPadHandle } from "@/components/DrawPad";
+import FocusBar from "@/components/FocusBar";
 import History from "@/components/History";
 import HoverTip from "@/components/HoverTip";
 import Inspector from "@/components/Inspector";
@@ -139,6 +140,13 @@ export default function Hero() {
           <div className="panel rounded p-4 md:hidden">
             <Controls />
           </div>
+          <div className="panel rounded p-4 md:hidden">
+            <FocusBar />
+          </div>
+        </div>
+
+        <div className="hidden md:block absolute bottom-16 left-1/2 -translate-x-1/2 z-10 panel px-3 py-2">
+          <FocusBar />
         </div>
 
         <button

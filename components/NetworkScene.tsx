@@ -1,7 +1,8 @@
 "use client";
 
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { ThreeEvent } from "@react-three/fiber";
 import type { MotionValue } from "framer-motion";
 import * as THREE from "three";
@@ -516,6 +517,9 @@ function Network({ scrollT }: NetworkProps) {
   const clearHover = () => setHover(null);
 
   // ---- per-frame animation ----
+  const { camera, controls } = useThree();
+  const focusTarget = useMemo(() => new THREE.Vector3(), []);
+  const focusPos = useMemo(() => new THREE.Vector3(), []);
   const groupRef = useRef<THREE.Group>(null);
   const tRef = useRef(0);
   const lastRunId = useRef(0);
@@ -649,6 +653,29 @@ function Network({ scrollT }: NetworkProps) {
       groupRef.current.position.z = s * 2.2;
       groupRef.current.position.y = s * -0.6;
     }
+
+    // "look closer" buttons: fly the camera to a layer; a manual drag or
+    // "back out" hands control back
+    const orbit = controls as OrbitControlsImpl | null;
+    if (orbit) {
+      orbit.autoRotate = !st.reducedMotion && st.focus === null;
+      if (st.focus !== null) {
+        const overview = st.focus === -1;
+        const fx = overview ? 0 : LAYER_X[st.focus] - 0.7;
+        focusTarget.set(overview ? 0 : fx, 0, 0);
+        focusPos.set(
+          overview ? 3.2 : fx + 1.4,
+          overview ? 2 : 1.1,
+          overview ? (st.lowPower ? 26 : 20) : st.focus === 0 || st.focus === 5 ? 6.5 : 8
+        );
+        const ease = st.reducedMotion ? 1 : 0.07;
+        orbit.target.lerp(focusTarget, ease);
+        camera.position.lerp(focusPos, ease);
+        if (overview && camera.position.distanceTo(focusPos) < 0.15) {
+          st.setFocus(null);
+        }
+      }
+    }
   });
 
   return (
@@ -703,9 +730,10 @@ export default function NetworkScene({ scrollT }: NetworkProps) {
         enablePan={false}
         autoRotate={!reducedMotion}
         autoRotateSpeed={0.2}
-        minDistance={8}
+        minDistance={4}
         maxDistance={32}
         maxPolarAngle={Math.PI * 0.85}
+        onStart={() => useApp.getState().setFocus(null)}
       />
     </Canvas>
   );
