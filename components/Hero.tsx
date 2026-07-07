@@ -65,16 +65,22 @@ export default function Hero() {
           className="absolute top-0 inset-x-0 z-20 flex items-start justify-between gap-4 px-4 md:px-7 py-4 pointer-events-none"
         >
           <div>
-            <h1 className="text-xl md:text-2xl font-semibold text-ink lowercase">vedant sheel</h1>
-            <p className="mt-0.5 text-[13px] text-faint max-w-[340px]">
+            <h1 className="text-3xl md:text-4xl font-bold text-ink lowercase">vedant sheel</h1>
+            <p className="mt-1.5 text-[15px] md:text-base text-ink/80 max-w-[400px] leading-snug">
               i trained a neural network and put it in your browser. draw a
-              number, hit run, and watch it actually think. hover and click
-              anything in the network — it&apos;s all real math, live.
+              number, hit run, and watch it actually think. everything you see
+              is real math happening live, and you can click all of it.
+            </p>
+            <p className="mt-1.5 text-[13px] text-faint pointer-events-auto">
+              <a className="plain" href="https://vedantsheel.com" target="_blank" rel="noopener noreferrer">
+                vedantsheel.com
+              </a>
+              <span className="font-mono"> · vedant.sheel [at] uwaterloo [dot] com</span>
             </p>
           </div>
           <div className="flex items-center gap-3 pointer-events-auto">
-            <span className="hidden md:inline font-mono text-[11px] text-faint">
-              784→64→48→32→16→10 · 96.9% accurate
+            <span className="hidden md:inline font-mono text-[12px] text-faint">
+              784→64→48→32→16→10, 96.9% accurate
             </span>
             <ThemeToggle />
           </div>
@@ -135,12 +141,17 @@ export default function Hero() {
           </div>
         </div>
 
-        <div
-          aria-hidden
-          className="hidden md:block absolute bottom-5 left-1/2 -translate-x-1/2 text-[12px] text-faint"
+        <button
+          type="button"
+          onClick={() =>
+            document.getElementById("machine")?.scrollIntoView({
+              behavior: reducedMotion ? "auto" : "smooth",
+            })
+          }
+          className="self-center my-3 md:my-0 md:absolute md:bottom-4 md:left-1/2 md:-translate-x-1/2 z-10 px-5 py-2.5 text-[15px] md:text-base text-ink bg-paper border border-ink/30 hover:border-copper hover:text-copper"
         >
-          keep scrolling — i&apos;ll explain every single part ↓
-        </div>
+          so how does it actually work? ↓
+        </button>
       </section>
 
       <HoverTip />

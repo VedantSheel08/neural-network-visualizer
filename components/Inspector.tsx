@@ -210,7 +210,7 @@ export default function Inspector() {
         <p className="text-[12px] leading-relaxed text-faint">
           {w >= 0
             ? "this weight is positive: when the neuron on the left fires, it pushes the one on the right to fire too. think of it as a vote in favor."
-            : "this weight is negative: when the neuron on the left fires, it actively holds the one on the right back. the network learned to rule things out, not just in — that's most of how it avoids confusing similar digits."}
+            : "this weight is negative: when the neuron on the left fires, it actively holds the one on the right back. the network learned to rule things out, not just in. that's most of how it avoids confusing similar digits."}
         </p>
         <p className="text-[11px] text-faint">
           the network has 55,626 of these. every single one was tuned during training.

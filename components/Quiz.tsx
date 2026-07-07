@@ -46,7 +46,7 @@ export default function Quiz({ q, options, answer, explain }: QuizProps) {
       </div>
       {done && (
         <p className="mt-3 text-[13px] leading-relaxed text-ink/85">
-          {picked === answer ? "yep. " : "not quite — "}
+          {picked === answer ? "yep. " : "not quite. "}
           {explain}
           {"  "}
           <button

@@ -404,8 +404,8 @@ function Network({ scrollT }: NetworkProps) {
       lines: [
         `activation: ${acts ? acts.a[i].toFixed(3) : "run something first"}`,
         isOut
-          ? `probability: ${acts ? (acts.a[i] * 100).toFixed(1) + "%" : "—"}`
-          : `weighted sum: ${acts ? acts.z[i].toFixed(3) : "—"}`,
+          ? `probability: ${acts ? (acts.a[i] * 100).toFixed(1) + "%" : "?"}`
+          : `weighted sum: ${acts ? acts.z[i].toFixed(3) : "?"}`,
         "click to open it up",
       ],
     });
@@ -431,7 +431,7 @@ function Network({ scrollT }: NetworkProps) {
         x: e.nativeEvent.clientX,
         y: e.nativeEvent.clientY,
         title: `image region ${cell} → neuron ${i}`,
-        lines: [`signal through here: ${flow !== undefined ? flow.toFixed(3) : "—"}`],
+        lines: [`signal through here: ${flow !== undefined ? flow.toFixed(3) : "?"}`],
       });
       return;
     }
@@ -446,7 +446,7 @@ function Network({ scrollT }: NetworkProps) {
       title: `a single weight`,
       lines: [
         `w = ${w.toFixed(3)}`,
-        `carrying: ${flow !== undefined ? flow.toFixed(3) : "—"}`,
+        `carrying: ${flow !== undefined ? flow.toFixed(3) : "?"}`,
         "click for the full story",
       ],
     });

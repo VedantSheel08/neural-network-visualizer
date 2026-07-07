@@ -40,9 +40,14 @@
   --color-ember: var(--ember);
   --color-gold: var(--gold);
 
-  /* system stacks: loads nothing, looks like a person's site */
-  --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+  /* georgia and courier. loads nothing, looks like a person made it. */
+  --font-body: Georgia, "Times New Roman", serif;
+  --font-mono: "Courier New", Courier, monospace;
+}
+
+/* square corners everywhere. rounded everything is a template smell. */
+* {
+  border-radius: 0 !important;
 }
 
 body {
@@ -69,10 +74,10 @@ body {
   outline-offset: 2px;
 }
 
-/* plain box. no blur, no glass. */
+/* plain solid surface with a thin ink rule. no blur, no glass, no card. */
 .panel {
-  background: var(--card);
-  border: 1px solid var(--graphite);
+  background: var(--paper);
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
 }
 
 .pixelated {

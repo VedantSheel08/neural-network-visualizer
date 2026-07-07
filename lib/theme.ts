@@ -1,10 +1,7 @@
 /**
- * Graphite & signal — shared tokens for the 3D scene (the DOM reads the same
- * values from CSS variables in globals.css; keep the two in sync).
- *
- * Light mode: signal DARKENS into warm paper (copper ink, pencil structure).
- * Dark mode: signal GLOWS out of warm graphite-black (copper filament).
- * `gold` is reserved for the verdict — the winning digit — and nothing else.
+ * Shared tokens for the 3D scene (the DOM reads the same values from CSS
+ * variables in globals.css; keep the two in sync). Minimal neutral palette
+ * with one warm accent. `gold` is reserved for the winning digit only.
  */
 
 export type Mode = "light" | "dark";

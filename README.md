@@ -9,7 +9,7 @@ then hover and click anything to check it.
 `784 → 64 → 48 → 32 → 16 → 10`, 55,626 parameters, 96.9% accurate on digits
 it never saw. trained with `train.py` (pytorch, ~2 min on a laptop cpu),
 weights exported to `public/model/weights.json` (~560 kb). the forward pass
-is plain typescript in `lib/inference.ts` — no ml library, no server.
+is plain typescript in `lib/inference.ts`. no ml library, no server.
 
 ## what you can do on the page
 
@@ -37,5 +37,5 @@ npm run build   # static production build
 
 ```bash
 pip install torch torchvision
-python train.py   # writes weights.json — copy to public/model/weights.json
+python train.py   # writes weights.json, copy it to public/model/weights.json
 ```

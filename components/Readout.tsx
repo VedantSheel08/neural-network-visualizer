@@ -68,8 +68,8 @@ export default function Readout() {
       </div>
       {show && (
         <p className="text-[11px] leading-relaxed text-faint">
-          these ten numbers always add up to 100%. that&apos;s the softmax step
-          — more on it below.
+          these ten numbers always add up to 100%. that&apos;s the softmax
+          step, there&apos;s a whole section on it below.
         </p>
       )}
     </div>

@@ -34,7 +34,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
   return (
     <section id={id} className="max-w-2xl mx-auto px-6 py-12 md:py-16">
       <Fade>
-        <h2 className="text-xl md:text-2xl font-semibold text-ink mb-5 lowercase">{title}</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-ink mb-6 lowercase">{title}</h2>
         {children}
       </Fade>
     </section>
@@ -42,7 +42,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
 }
 
 function P({ children }: { children: React.ReactNode }) {
-  return <p className="text-[15px] leading-relaxed text-ink/85 mb-4">{children}</p>;
+  return <p className="text-[17px] leading-relaxed text-ink/90 mb-5">{children}</p>;
 }
 
 function Paper({ href, children }: { href: string; children: React.ReactNode }) {
@@ -62,7 +62,7 @@ function LiveMath({ t }: { t: number }) {
   if (!model || !run) {
     return (
       <p className="text-[13px] text-faint my-3">
-        (draw something and hit run — this fills in with your actual numbers)
+        (draw something and hit run. this fills in with your actual numbers)
       </p>
     );
   }
@@ -83,8 +83,8 @@ function LiveMath({ t }: { t: number }) {
   return (
     <div className="my-4">
       <p className="text-[12px] text-faint mb-1">
-        with your drawing, right now (showing 3 of {W.length} rows — click a
-        neuron in the network for its full picture):
+        with your drawing, right now. showing 3 of {W.length} rows, click a
+        neuron in the network for its full picture:
       </p>
       <MathTex block className="text-ink" tex={tex} />
     </div>
@@ -619,7 +619,7 @@ function ReadMore() {
         {links.map(([title, href, note]) => (
           <li key={href} className="text-[14px] leading-relaxed">
             <Paper href={href}>{title}</Paper>
-            <span className="text-faint"> — {note}</span>
+            <span className="text-faint">. {note}</span>
           </li>
         ))}
       </ul>
@@ -638,8 +638,13 @@ function About() {
         one rule i held myself to: never fake a number. if something glows,
         it&apos;s because the math said so, and you can click it to check me.
       </P>
-      <p className="text-[13px] text-faint font-mono">
-        vedant [dot] sheel [at] uwaterloo [dot] ca
+      <p className="text-[15px] text-faint">
+        the rest of my stuff lives at{" "}
+        <a className="plain" href="https://vedantsheel.com" target="_blank" rel="noopener noreferrer">
+          vedantsheel.com
+        </a>
+        , and if you want to talk about this:{" "}
+        <span className="font-mono text-[13px]">vedant.sheel [at] uwaterloo [dot] com</span>
       </p>
     </Section>
   );
@@ -649,10 +654,13 @@ function Footer() {
   return (
     <footer className="border-t border-graphite">
       <div className="max-w-2xl mx-auto px-6 py-8 flex flex-wrap items-baseline justify-between gap-3">
-        <p className="text-[14px] text-ink">
-          built by <span className="text-copper font-medium">vedant sheel</span>
+        <p className="text-[16px] text-ink">
+          built by{" "}
+          <a className="plain font-medium" href="https://vedantsheel.com" target="_blank" rel="noopener noreferrer">
+            vedant sheel
+          </a>
         </p>
-        <p className="font-mono text-[11px] text-faint">
+        <p className="font-mono text-[12px] text-faint">
           pytorch → json → typescript → your gpu. no server.
         </p>
       </div>
