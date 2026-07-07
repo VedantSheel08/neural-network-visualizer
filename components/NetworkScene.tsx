@@ -76,19 +76,62 @@ interface Seg {
   b: THREE.Vector3;
 }
 
-function buildSegments(): Seg[][] {
-  const groups: Seg[][] = [];
-  // input regions -> layer 1, ordered [cell * n + i] like inputRegionContributions
-  const g0: Seg[] = [];
-  for (let cell = 0; cell < 16; cell++)
-    for (let i = 0; i < LAYER_SIZES[0]; i++) g0.push({ a: anchorPos(cell), b: nodePos(0, i) });
+interface SegGroup {
+  segs: Seg[];
+  /** index of each drawn fiber into the full per-run edge-value array */
+  map: number[];
+}
+
+/**
+ * Drawing all 6,304 connections is an unreadable hairball, so the view keeps
+ * only each neuron's strongest incoming connections (by |weight|; for the
+ * input bundles, by total |weight| of the region). The math still uses every
+ * connection; `map` ties each drawn fiber back to its true value.
+ */
+const KEEP_REGIONS = 6; // of 16 input regions per layer-1 neuron
+const KEEP_IN = 10; // strongest incoming weights per deeper neuron
+
+function buildSegments(model: import("@/lib/inference").ModelWeights | null): SegGroup[] {
+  if (!model) return Array.from({ length: N_LAYERS }, () => ({ segs: [], map: [] }));
+  const groups: SegGroup[] = [];
+
+  // input regions -> layer 1: keep regions where this neuron's weights are big
+  const w0 = model.layers[0].weights;
+  const g0: SegGroup = { segs: [], map: [] };
+  for (let i = 0; i < LAYER_SIZES[0]; i++) {
+    const regionMass = Array.from({ length: 16 }, (_, cell) => {
+      let sum = 0;
+      for (let py = 0; py < 28; py++) {
+        for (let px = 0; px < 28; px++) {
+          const r = Math.floor(py / 7);
+          const c = Math.floor(px / 7);
+          if (r * 4 + c === cell) sum += Math.abs(w0[i][py * 28 + px]);
+        }
+      }
+      return { cell, sum };
+    });
+    regionMass.sort((a, b) => b.sum - a.sum);
+    for (const { cell } of regionMass.slice(0, KEEP_REGIONS)) {
+      g0.segs.push({ a: anchorPos(cell), b: nodePos(0, i) });
+      g0.map.push(cell * LAYER_SIZES[0] + i);
+    }
+  }
   groups.push(g0);
+
   for (let t = 1; t < N_LAYERS; t++) {
     const nIn = LAYER_SIZES[t - 1];
     const nOut = LAYER_SIZES[t];
-    const g: Seg[] = [];
-    for (let i = 0; i < nOut; i++)
-      for (let j = 0; j < nIn; j++) g.push({ a: nodePos(t - 1, j), b: nodePos(t, i) });
+    const W = model.layers[t].weights;
+    const g: SegGroup = { segs: [], map: [] };
+    for (let i = 0; i < nOut; i++) {
+      const order = Array.from({ length: nIn }, (_, j) => j).sort(
+        (a, b) => Math.abs(W[i][b]) - Math.abs(W[i][a])
+      );
+      for (const j of order.slice(0, KEEP_IN)) {
+        g.segs.push({ a: nodePos(t - 1, j), b: nodePos(t, i) });
+        g.map.push(i * nIn + j);
+      }
+    }
     groups.push(g);
   }
   return groups;
@@ -187,20 +230,26 @@ function makeFiberGroup(segments: Seg[], radialSegments: number, gain: number, m
   return { mesh, material, setMatrices };
 }
 
-function applyEdgeValues(group: ReturnType<typeof makeFiberGroup>, values: Float32Array) {
-  const n = values.length;
+function applyEdgeValues(
+  group: ReturnType<typeof makeFiberGroup>,
+  values: Float32Array,
+  map: number[]
+) {
+  // normalize against the full value array so hidden edges don't skew scale
   let max = 0;
-  for (let k = 0; k < n; k++) {
+  for (let k = 0; k < values.length; k++) {
     const v = Math.abs(values[k]);
     if (v > max) max = v;
   }
+  const n = map.length;
   const intensity = new Float32Array(n);
   const aIntensity = group.mesh.geometry.getAttribute("aIntensity") as THREE.InstancedBufferAttribute;
   const aSign = group.mesh.geometry.getAttribute("aSign") as THREE.InstancedBufferAttribute;
   for (let k = 0; k < n; k++) {
-    intensity[k] = max > 0 ? Math.sqrt(Math.abs(values[k]) / max) : 0;
+    const v = values[map[k]];
+    intensity[k] = max > 0 ? Math.sqrt(Math.abs(v) / max) : 0;
     aIntensity.setX(k, intensity[k]);
-    aSign.setX(k, values[k] >= 0 ? 1 : -1);
+    aSign.setX(k, v >= 0 ? 1 : -1);
   }
   aIntensity.needsUpdate = true;
   aSign.needsUpdate = true;
@@ -231,8 +280,8 @@ function makeTextSprite(text: string, px: number, scale: number) {
 
 // ---- the network ------------------------------------------------------------
 
-// gain per group compensates additive overdraw (1024/3072/1536/512/160 fibers)
-const GROUP_GAINS = [0.42, 0.3, 0.45, 0.6, 0.85];
+// gain per group compensates additive overdraw (fiber counts after filtering)
+const GROUP_GAINS = [0.6, 0.55, 0.6, 0.7, 0.85];
 const INTRO_MS = 2100;
 
 interface NetworkProps {
@@ -244,17 +293,18 @@ function Network({ scrollT }: NetworkProps) {
   const lowPower = useApp((s) => s.lowPower);
   const input = useApp((s) => s.input);
   const run = useApp((s) => s.run);
+  const model = useApp((s) => s.model);
   const p = PALETTES[mode];
 
-  const segments = useMemo(buildSegments, []);
+  const segments = useMemo(() => buildSegments(model), [model]);
   const fiberGroups = useMemo(
-    () => segments.map((s, i) => makeFiberGroup(s, lowPower ? 3 : 4, GROUP_GAINS[i], mode)),
+    () => segments.map((s, i) => makeFiberGroup(s.segs, lowPower ? 3 : 4, GROUP_GAINS[i], mode)),
     [segments, lowPower, mode]
   );
 
   const dormantLines = useMemo(() => {
     const pts: number[] = [];
-    for (const group of segments) for (const { a, b } of group) pts.push(a.x, a.y, a.z, b.x, b.y, b.z);
+    for (const group of segments) for (const { a, b } of group.segs) pts.push(a.x, a.y, a.z, b.x, b.y, b.z);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
     return new THREE.LineSegments(
@@ -381,8 +431,9 @@ function Network({ scrollT }: NetworkProps) {
   // load run values into fibers (also re-applies after a mode rebuild)
   useEffect(() => {
     if (!run) return;
-    for (let g = 0; g < N_LAYERS; g++) applyEdgeValues(fiberGroups[g], run.edges[g]);
-  }, [run, fiberGroups]);
+    for (let g = 0; g < N_LAYERS; g++)
+      applyEdgeValues(fiberGroups[g], run.edges[g], segments[g].map);
+  }, [run, fiberGroups, segments]);
 
   // ---- pointer interaction ----
   const setHover = useApp((s) => s.setHover);
@@ -423,10 +474,12 @@ function Network({ scrollT }: NetworkProps) {
     if (k === undefined) return;
     const st = useApp.getState();
     if (!st.model) return;
+    const orig = segments[t].map[k];
+    if (orig === undefined) return;
     if (t === 0) {
-      const cell = Math.floor(k / LAYER_SIZES[0]);
-      const i = k % LAYER_SIZES[0];
-      const flow = st.run?.edges[0][k];
+      const cell = Math.floor(orig / LAYER_SIZES[0]);
+      const i = orig % LAYER_SIZES[0];
+      const flow = st.run?.edges[0][orig];
       setHover({
         x: e.nativeEvent.clientX,
         y: e.nativeEvent.clientY,
@@ -436,10 +489,10 @@ function Network({ scrollT }: NetworkProps) {
       return;
     }
     const nIn = LAYER_SIZES[t - 1];
-    const i = Math.floor(k / nIn);
-    const j = k % nIn;
+    const i = Math.floor(orig / nIn);
+    const j = orig % nIn;
     const w = st.model.layers[t].weights[i][j];
-    const flow = st.run?.edges[t][k];
+    const flow = st.run?.edges[t][orig];
     setHover({
       x: e.nativeEvent.clientX,
       y: e.nativeEvent.clientY,
@@ -455,8 +508,10 @@ function Network({ scrollT }: NetworkProps) {
     e.stopPropagation();
     const k = e.instanceId;
     if (k === undefined || t === 0) return;
+    const orig = segments[t].map[k];
+    if (orig === undefined) return;
     const nIn = LAYER_SIZES[t - 1];
-    select({ kind: "edge", transition: t, from: k % nIn, to: Math.floor(k / nIn) });
+    select({ kind: "edge", transition: t, from: orig % nIn, to: Math.floor(orig / nIn) });
   };
   const clearHover = () => setHover(null);
 

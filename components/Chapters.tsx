@@ -124,6 +124,13 @@ function Machine() {
         click anything to open it up.
       </P>
       <P>
+        one honest note about the picture: drawing all 6,304 connections at
+        once is an unreadable hairball, so the view only draws each
+        neuron&apos;s strongest connections. the math underneath always uses
+        every single one, and clicking any neuron shows you all of its
+        weights, including the ones not drawn.
+      </P>
+      <P>
         the dataset it learned from is called{" "}
         <Term d="70,000 handwritten digits collected from us census workers and high school students in the 90s. the 'hello world' of machine learning.">
           mnist
