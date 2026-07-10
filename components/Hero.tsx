@@ -117,13 +117,13 @@ export default function Hero() {
             transition={{ duration: 0.4, delay: reducedMotion ? 0 : 0.1 }}
             className="md:absolute md:left-6 md:bottom-6 md:z-10 flex flex-col gap-3 w-full max-w-xs"
           >
-            <div className="panel rounded p-4">
+            <div className="panel p-4">
               <DrawPad ref={padRef} />
               <div className="mt-4 flex items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={() => padRef.current?.clear()}
-                  className="px-3 py-2 text-[13px] text-faint hover:text-ink border border-graphite rounded"
+                  className="px-3 py-2 text-[13px] text-faint hover:text-ink border border-graphite"
                 >
                   clear
                 </button>
@@ -131,7 +131,7 @@ export default function Hero() {
                   type="button"
                   onClick={() => execute("run")}
                   disabled={!model || !input}
-                  className="px-5 py-2 text-[13px] font-medium rounded bg-copper text-paper hover:bg-ember disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="px-5 py-2 text-[13px] font-medium bg-copper text-paper hover:bg-ember disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   run it
                 </button>
@@ -142,7 +142,7 @@ export default function Hero() {
                 </p>
               )}
             </div>
-            <div className="panel rounded p-4 hidden md:block">
+            <div className="panel p-4 hidden md:block">
               <Controls />
             </div>
           </motion.div>
@@ -153,18 +153,18 @@ export default function Hero() {
             className="md:absolute md:right-6 md:top-16 md:z-10 flex flex-col gap-3 w-full max-w-xs md:max-h-[calc(100dvh-6rem)] md:overflow-y-auto"
           >
             <Inspector />
-            <div className="panel rounded p-4">
+            <div className="panel p-4">
               <Readout />
             </div>
-            <div className="panel rounded p-4 empty:hidden">
+            <div className="panel p-4 empty:hidden">
               <History />
             </div>
           </motion.div>
 
-          <div className="panel rounded p-4 md:hidden">
+          <div className="panel p-4 md:hidden">
             <Controls />
           </div>
-          <div className="panel rounded p-4 md:hidden">
+          <div className="panel p-4 md:hidden">
             <FocusBar />
           </div>
         </div>
