@@ -147,6 +147,10 @@ export default function Hero() {
             </div>
           </motion.div>
 
+          <div className="panel p-4 md:hidden">
+            <FocusBar />
+          </div>
+
           <motion.div
             {...panel}
             transition={{ duration: 0.4, delay: reducedMotion ? 0 : 0.2 }}
@@ -163,9 +167,6 @@ export default function Hero() {
 
           <div className="panel p-4 md:hidden">
             <Controls />
-          </div>
-          <div className="panel p-4 md:hidden">
-            <FocusBar />
           </div>
         </div>
 
