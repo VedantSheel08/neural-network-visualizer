@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { motion, useReducedMotion, useScroll } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import Controls from "@/components/Controls";
-import DrawPad, { type DrawPadHandle } from "@/components/DrawPad";
+import DrawPad from "@/components/DrawPad";
 import FocusBar from "@/components/FocusBar";
 import History from "@/components/History";
 import HoverTip from "@/components/HoverTip";
@@ -26,7 +26,6 @@ const NetworkScene = dynamic(() => import("@/components/NetworkScene"), {
 
 export default function Hero() {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const padRef = useRef<DrawPadHandle>(null);
   const prefersReduced = useReducedMotion() ?? false;
   const [expanded, setExpanded] = useState(false);
 
@@ -34,8 +33,6 @@ export default function Hero() {
   const setEnv = useApp((s) => s.setEnv);
   const model = useApp((s) => s.model);
   const modelError = useApp((s) => s.modelError);
-  const input = useApp((s) => s.input);
-  const execute = useApp((s) => s.execute);
   const reducedMotion = useApp((s) => s.reducedMotion);
   const tour = useApp((s) => s.tour);
   const setTour = useApp((s) => s.setTour);
@@ -128,31 +125,7 @@ export default function Hero() {
             transition={{ duration: 0.4, delay: reducedMotion ? 0 : 0.1 }}
             className="md:absolute md:left-8 md:bottom-8 md:z-10 flex flex-col gap-4 w-full max-w-xs"
           >
-            <div className="panel p-5">
-              <DrawPad ref={padRef} />
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => padRef.current?.clear()}
-                  className="px-3 py-2 text-[13px] text-faint hover:text-ink border border-graphite"
-                >
-                  clear
-                </button>
-                <button
-                  type="button"
-                  onClick={() => execute("run")}
-                  disabled={!model || !input}
-                  className="px-5 py-2 text-[13px] font-medium bg-copper text-paper hover:bg-ember disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  run it
-                </button>
-              </div>
-              {modelError && (
-                <p className="mt-3 text-[12px] text-copper">
-                  couldn&apos;t load the network weights. try reloading.
-                </p>
-              )}
-            </div>
+            <DrawPad />
             <div className="panel p-5 hidden md:block">
               <Controls />
             </div>
