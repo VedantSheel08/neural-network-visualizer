@@ -8,7 +8,7 @@ export default function HoverTip() {
   if (!hover) return null;
   return (
     <div
-      className="pointer-events-none fixed z-50 panel rounded-sm px-3 py-2 font-mono text-[11px] leading-relaxed"
+      className="pointer-events-none fixed z-50 panel px-3 py-2 font-mono text-[11px] leading-relaxed"
       style={{ left: hover.x + 14, top: hover.y + 14 }}
       role="status"
     >
