@@ -1,6 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
+import ChapterRail from "@/components/ChapterRail";
 import MathTex from "@/components/MathTex";
 import Quiz from "@/components/Quiz";
 import Term from "@/components/Term";
@@ -15,28 +17,60 @@ import { ARCH } from "@/lib/theme";
  * in the math blocks is pulled live from your latest run.
  */
 
-function Fade({ children, className }: { children: React.ReactNode; className?: string }) {
+/** a circuit-trace rule that draws itself in as it enters view, and keeps
+ *  drawing/retracting with actual scroll position rather than a flat fade */
+function Trace() {
   const reduced = useApp((s) => s.reducedMotion);
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 85%", "start 45%"] });
+  const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1]);
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: reduced ? 0 : 0.45 }}
-      className={className}
-    >
-      {children}
-    </motion.div>
+    <div ref={ref} className="max-w-2xl mx-auto px-6">
+      <motion.div
+        style={reduced ? { scaleX: 1 } : { scaleX, transformOrigin: "left" }}
+        className="h-px bg-graphite relative"
+      >
+        <span className="absolute right-0 -top-[3px] w-[7px] h-[7px] bg-copper" />
+      </motion.div>
+    </div>
   );
 }
 
-function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
+function Section({ id, num, title, children }: { id: string; num: number; title: string; children: React.ReactNode }) {
+  const reduced = useApp((s) => s.reducedMotion);
+  const ref = useRef<HTMLElement>(null);
+  const fromLeft = num % 2 === 1;
+
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "start start"] });
+  const numY = useTransform(scrollYProgress, [0, 1], [50, -30]);
+  const numOpacity = useTransform(scrollYProgress, [0, 0.5, 1], [0, 0.4, 0.12]);
+
   return (
-    <section id={id} className="max-w-2xl mx-auto px-6 py-12 md:py-16">
-      <Fade>
+    <section ref={ref} id={id} className="relative max-w-2xl mx-auto px-6 py-16 md:py-24 overflow-hidden">
+      <motion.span
+        aria-hidden="true"
+        style={reduced ? { opacity: 0.15 } : { y: numY, opacity: numOpacity }}
+        className="pointer-events-none select-none absolute -top-2 md:top-0 right-2 md:-right-4 text-[92px] md:text-[150px] font-bold text-graphite leading-none"
+      >
+        {String(num).padStart(2, "0")}
+      </motion.span>
+      <motion.div
+        initial={
+          reduced
+            ? false
+            : {
+                opacity: 0,
+                clipPath: fromLeft ? "inset(0 100% 0 0)" : "inset(0 0 0 100%)",
+              }
+        }
+        whileInView={{ opacity: 1, clipPath: "inset(0 0% 0 0%)" }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: reduced ? 0 : 0.75, ease: [0.16, 1, 0.3, 1] }}
+        className="relative"
+      >
         <h2 className="text-2xl md:text-3xl font-bold text-ink mb-6 lowercase">{title}</h2>
         {children}
-      </Fade>
+      </motion.div>
     </section>
   );
 }
@@ -95,7 +129,7 @@ function LiveMath({ t }: { t: number }) {
 
 function Machine() {
   return (
-    <Section id="machine" title="what you're looking at">
+    <Section id="machine" num={1} title="what you're looking at">
       <P>
         the thing spinning above is a{" "}
         <Term d="a pile of simple math units ('neurons') wired together with adjustable numbers ('weights'). that's the whole thing. no magic.">
@@ -149,7 +183,7 @@ function Pixels() {
   const input = useApp((s) => s.input);
   const on = input ? Array.from(input).filter((v) => v > 0.05).length : null;
   return (
-    <Section id="pixels" title="step 1: your drawing becomes 784 numbers">
+    <Section id="pixels" num={2} title="step 1: your drawing becomes 784 numbers">
       <P>
         computers don&apos;t see drawings. they see numbers. so the first step
         is brutal: your drawing gets squashed down to a 28×28 grid, and each
@@ -188,7 +222,7 @@ function Pixels() {
 
 function LayerOne() {
   return (
-    <Section id="layer-1" title="step 2: 64 neurons look for strokes">
+    <Section id="layer-1" num={3} title="step 2: 64 neurons look for strokes">
       <P>
         each of the 64 neurons in the first layer owns 784{" "}
         <Term d="an adjustable number attached to one connection. positive means 'this input is evidence for me', negative means 'this input is evidence against me', near zero means 'don't care'.">
@@ -247,7 +281,7 @@ function MiddleLayers() {
     return c;
   };
   return (
-    <Section id="middle" title="steps 3, 4, 5: strokes become parts, parts become shapes">
+    <Section id="middle" num={4} title="steps 3, 4, 5: strokes become parts, parts become shapes">
       <P>
         the layers of 48, 32, and 16 neurons never see your pixels. each one
         only sees the outputs of the layer before it, and does the exact same
@@ -309,7 +343,7 @@ function MiddleLayers() {
 
 function Output() {
   return (
-    <Section id="output" title="step 6: ten scores, one answer">
+    <Section id="output" num={5} title="step 6: ten scores, one answer">
       <P>
         the last layer is a vote. each of the 10 output neurons (one per
         digit) takes a weighted sum of the 16 signals from layer four.
@@ -333,7 +367,7 @@ function Softmax() {
   const exps = logits?.map((z) => Math.exp(z - maxZ));
   const expSum = exps?.reduce((s, v) => s + v, 0) ?? 1;
   return (
-    <Section id="softmax" title="softmax: why the answer comes as percentages">
+    <Section id="softmax" num={6} title="softmax: why the answer comes as percentages">
       <P>
         <Term d="a function that turns any list of numbers into percentages that add to 100%, keeping their order. bigger inputs get disproportionately bigger shares.">
           softmax
@@ -398,7 +432,7 @@ function Softmax() {
 
 function Wrong() {
   return (
-    <Section id="wrong" title="when it screws up (try it, it's fun)">
+    <Section id="wrong" num={7} title="when it screws up (try it, it's fun)">
       <P>
         draw a 1 with a big serif and a base. draw a 7 with a european
         crossbar. draw something tiny in the corner, or a 6 that&apos;s mostly
@@ -431,7 +465,7 @@ function Wrong() {
 function Training() {
   const reduced = useApp((s) => s.reducedMotion);
   return (
-    <Section id="training" title="how it learned (before you got here)">
+    <Section id="training" num={8} title="how it learned (before you got here)">
       <P>
         nothing on this page learns. the weights were frozen before you
         arrived. training happened once, on my machine, like this: show the
@@ -526,7 +560,7 @@ function Training() {
 
 function Bigger() {
   return (
-    <Section id="bigger" title="is chatgpt just a bigger version of this?">
+    <Section id="bigger" num={9} title="is chatgpt just a bigger version of this?">
       <P>
         genuinely, more than you&apos;d think. the core loop, weighted sums,
         nonlinearities, softmax at the end, loss, backprop, gradient steps,
@@ -564,7 +598,7 @@ function Glossary() {
     ["mnist", "the classic dataset of 70,000 handwritten digits this network learned from."],
   ];
   return (
-    <Section id="glossary" title="every term on this page, in one place">
+    <Section id="glossary" num={10} title="every term on this page, in one place">
       <dl className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[14px]">
         {terms.map(([t, d]) => (
           <div key={t} className="contents">
@@ -621,7 +655,7 @@ function ReadMore() {
     ],
   ];
   return (
-    <Section id="reading" title="if you want to go deeper">
+    <Section id="reading" num={11} title="if you want to go deeper">
       <ul className="flex flex-col gap-3">
         {links.map(([title, href, note]) => (
           <li key={href} className="text-[14px] leading-relaxed">
@@ -636,7 +670,7 @@ function ReadMore() {
 
 function About() {
   return (
-    <Section id="about" title="about this">
+    <Section id="about" num={12} title="about this">
       <P>
         i&apos;m vedant. i built everything here: trained the network in
         pytorch (the script is in the repo, it takes about two minutes on a
@@ -678,17 +712,29 @@ function Footer() {
 export default function Chapters() {
   return (
     <>
+      <ChapterRail />
       <Machine />
+      <Trace />
       <Pixels />
+      <Trace />
       <LayerOne />
+      <Trace />
       <MiddleLayers />
+      <Trace />
       <Output />
+      <Trace />
       <Softmax />
+      <Trace />
       <Wrong />
+      <Trace />
       <Training />
+      <Trace />
       <Bigger />
+      <Trace />
       <Glossary />
+      <Trace />
       <ReadMore />
+      <Trace />
       <About />
       <Footer />
     </>
