@@ -22,7 +22,7 @@ export default function ThemeToggle() {
       aria-checked={dark}
       aria-label={dark ? "switch to light mode" : "switch to dark mode"}
       onClick={() => setMode(dark ? "light" : "dark")}
-      className="text-[12px] text-faint hover:text-ink border border-graphite rounded px-2.5 py-1"
+      className="text-[12px] text-faint hover:text-ink border border-graphite px-2.5 py-1"
     >
       {dark ? "lights on" : "lights off"}
     </button>
