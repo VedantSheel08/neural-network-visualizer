@@ -25,7 +25,7 @@ function Thumb({ input }: { input: Float32Array }) {
     ctx.putImageData(img, 0, 0);
   }, [input, mode]);
   return (
-    <canvas ref={ref} width={28} height={28} className="w-9 h-9 pixelated rounded-[2px] bg-paper border border-graphite/50" />
+    <canvas ref={ref} width={28} height={28} className="w-9 h-9 pixelated bg-paper border border-graphite/50" />
   );
 }
 
