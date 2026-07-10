@@ -227,21 +227,28 @@ export default function Inspector() {
           animate={{ opacity: 1, x: 0 }}
           exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: 24 }}
           transition={{ type: "spring", stiffness: 380, damping: 34 }}
-          className="panel p-5 w-full max-w-xs max-h-[70vh] overflow-y-auto"
+          className="panel border border-graphite flex flex-col overflow-hidden w-full max-w-xs max-h-[70vh]"
           aria-label="Inspector"
         >
-          <div className="flex items-start justify-between gap-2 mb-3">
-            <h3 className="text-[13px] font-medium text-ink">{title}</h3>
+          <div className="shrink-0 h-8 flex items-center gap-2 px-3 border-b border-graphite">
+            <span className="flex gap-[6px] shrink-0" aria-hidden="true">
+              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e0605a" /></svg>
+              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e0b04a" /></svg>
+              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#5fae5f" /></svg>
+            </span>
+            <span className="flex-1 min-w-0 truncate text-[11px] text-faint tracking-tight font-mono">
+              inspector.open() — {title}
+            </span>
             <button
               type="button"
               onClick={() => select(null)}
               aria-label="close"
-              className="text-faint hover:text-ink leading-none text-lg p-2 -m-2"
+              className="shrink-0 text-faint hover:text-ink leading-none text-lg p-2 -m-2"
             >
               ×
             </button>
           </div>
-          {body}
+          <div className="p-5 overflow-y-auto">{body}</div>
         </motion.aside>
       )}
     </AnimatePresence>
