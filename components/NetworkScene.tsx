@@ -266,7 +266,7 @@ function makeTextSprite(text: string, px: number, scale: number) {
   const draw = () => {
     const ctx = canvas.getContext("2d")!;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.font = `500 ${px}px ui-monospace, Consolas, monospace`;
+    ctx.font = `500 ${px}px Arial, Helvetica, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#ffffff";
@@ -373,16 +373,35 @@ function Network({ scrollT }: NetworkProps) {
     });
   }, []);
 
+  const gridHalfFor = (i: number) =>
+    i === 0 ? 2.2 : i === N_LAYERS ? 3.4 : ((GRIDS[i - 1].r - 1) / 2) * GRIDS[i - 1].dy + 0.8;
+
   const captionSprites = useMemo(() => {
     const caps = ["your drawing", "64 neurons", "48 neurons", "32 neurons", "16 neurons", "10 digits"];
     return caps.map((text, i) => {
-      const gridHalf =
-        i === 0 ? 2.2 : i === N_LAYERS ? 3.4 : ((GRIDS[i - 1].r - 1) / 2) * GRIDS[i - 1].dy + 0.8;
+      const gridHalf = gridHalfFor(i);
       const s = makeTextSprite(text, 44, 0.28);
       s.position.set(LAYER_X[i], -gridHalf - 0.5, 0);
       return s;
     });
   }, []);
+
+  // thin always-on leader from each column down to its label, so the
+  // layer sizes read as a labeled diagram rather than decoration
+  const captionLeaders = useMemo(() => {
+    const pts: number[] = [];
+    for (let i = 0; i <= N_LAYERS; i++) {
+      const gridHalf = gridHalfFor(i);
+      const x = LAYER_X[i];
+      pts.push(x, -gridHalf, 0, x, -gridHalf - 0.3, 0);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+    return new THREE.LineSegments(
+      geo,
+      new THREE.LineBasicMaterial({ color: new THREE.Color(p.graphite), transparent: true, opacity: 0 })
+    );
+  }, [p.graphite]);
 
   const { planeMesh, planeTexture } = useMemo(() => {
     const data = new Uint8Array(28 * 28 * 4);
@@ -641,6 +660,7 @@ function Network({ scrollT }: NetworkProps) {
       cap.material.color.copy(colors.faint);
       cap.material.opacity = 0.9 * (introDone.current ? 1 : introT);
     }
+    captionLeaders.material.opacity = 0.55 * (introDone.current ? 1 : introT);
 
     if (introDone.current) {
       (planeMesh.material as THREE.MeshBasicMaterial).opacity = 1;
@@ -706,6 +726,7 @@ function Network({ scrollT }: NetworkProps) {
       {captionSprites.map((s, i) => (
         <primitive key={`c${i}`} object={s} />
       ))}
+      <primitive object={captionLeaders} />
     </group>
   );
 }
