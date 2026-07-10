@@ -96,7 +96,6 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--graphite);
   border: 3px solid var(--paper);
-  border-radius: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
