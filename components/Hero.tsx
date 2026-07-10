@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { motion, useReducedMotion, useScroll } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Controls from "@/components/Controls";
 import DrawPad, { type DrawPadHandle } from "@/components/DrawPad";
 import FocusBar from "@/components/FocusBar";
@@ -27,6 +27,7 @@ export default function Hero() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const padRef = useRef<DrawPadHandle>(null);
   const prefersReduced = useReducedMotion() ?? false;
+  const [expanded, setExpanded] = useState(false);
 
   const loadModel = useApp((s) => s.loadModel);
   const setEnv = useApp((s) => s.setEnv);
@@ -98,16 +99,30 @@ export default function Hero() {
           </div>
         </motion.header>
 
-        <div className="cursor-zone relative h-[52dvh] min-h-[320px] mx-3 mt-3 md:mt-0 md:h-auto md:absolute md:inset-x-8 md:top-72 md:bottom-24 border border-graphite bg-card flex flex-col overflow-hidden">
+        <div
+          className={`cursor-zone relative mx-3 mt-3 md:mt-0 md:h-auto md:absolute border border-graphite bg-card flex flex-col overflow-hidden transition-[height] duration-300 ${
+            expanded
+              ? "h-[62dvh] min-h-[380px] md:inset-x-8 md:top-72 md:bottom-24"
+              : "h-[36dvh] min-h-[240px] md:inset-x-20 md:top-80 md:bottom-32"
+          }`}
+        >
           <div className="shrink-0 h-8 flex items-center gap-2 px-3 border-b border-graphite">
             <span className="flex gap-[6px]" aria-hidden="true">
               <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e0605a" /></svg>
               <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e0b04a" /></svg>
               <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#5fae5f" /></svg>
             </span>
-            <span className="text-[11px] text-faint tracking-tight font-mono">
+            <span className="flex-1 text-[11px] text-faint tracking-tight font-mono">
               network.forward() — {modelError ? "error" : model ? "live" : "loading…"}
             </span>
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              aria-label={expanded ? "shrink the network view" : "enlarge the network view"}
+              className="text-[11px] text-faint hover:text-ink border border-graphite px-2 py-0.5"
+            >
+              {expanded ? "shrink" : "enlarge"}
+            </button>
           </div>
           <div className="relative flex-1">
             <NetworkScene scrollT={scrollYProgress} />
