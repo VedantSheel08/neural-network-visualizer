@@ -59,22 +59,6 @@ export default function Hero() {
   return (
     <div ref={wrapRef} className="relative md:h-[200vh]">
       <section className="relative flex flex-col md:block md:sticky md:top-0 md:h-dvh">
-        <div className="cursor-zone relative h-[52dvh] min-h-[320px] mx-3 mt-3 md:mt-0 md:h-auto md:absolute md:inset-x-8 md:top-72 md:bottom-24 border border-graphite bg-card flex flex-col overflow-hidden">
-          <div className="shrink-0 h-8 flex items-center gap-2 px-3 border-b border-graphite">
-            <span className="flex gap-[6px]" aria-hidden="true">
-              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e0605a" /></svg>
-              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e0b04a" /></svg>
-              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#5fae5f" /></svg>
-            </span>
-            <span className="text-[11px] text-faint tracking-tight font-mono">
-              network.forward() — {modelError ? "error" : model ? "live" : "loading…"}
-            </span>
-          </div>
-          <div className="relative flex-1">
-            <NetworkScene scrollT={scrollYProgress} />
-          </div>
-        </div>
-
         <motion.header
           {...panel}
           transition={{ duration: 0.4 }}
@@ -113,6 +97,22 @@ export default function Hero() {
             )}
           </div>
         </motion.header>
+
+        <div className="cursor-zone relative h-[52dvh] min-h-[320px] mx-3 mt-3 md:mt-0 md:h-auto md:absolute md:inset-x-8 md:top-72 md:bottom-24 border border-graphite bg-card flex flex-col overflow-hidden">
+          <div className="shrink-0 h-8 flex items-center gap-2 px-3 border-b border-graphite">
+            <span className="flex gap-[6px]" aria-hidden="true">
+              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e0605a" /></svg>
+              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e0b04a" /></svg>
+              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#5fae5f" /></svg>
+            </span>
+            <span className="text-[11px] text-faint tracking-tight font-mono">
+              network.forward() — {modelError ? "error" : model ? "live" : "loading…"}
+            </span>
+          </div>
+          <div className="relative flex-1">
+            <NetworkScene scrollT={scrollYProgress} />
+          </div>
+        </div>
 
         <div className="z-10 flex flex-col gap-4 p-4 md:p-0 md:contents">
           <motion.div
