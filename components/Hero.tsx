@@ -123,7 +123,7 @@ export default function Hero() {
                 <button
                   type="button"
                   onClick={() => padRef.current?.clear()}
-                  className="px-3 py-2 text-[12px] text-faint hover:text-ink border border-graphite rounded"
+                  className="px-3 py-2 text-[13px] text-faint hover:text-ink border border-graphite rounded"
                 >
                   clear
                 </button>
