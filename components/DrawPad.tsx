@@ -126,7 +126,7 @@ export default function DrawPad({ ref }: DrawPadProps) {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
-          className="w-full max-w-[280px] aspect-square rounded-sm border border-graphite/60 touch-none cursor-crosshair bg-paper"
+          className="w-full max-w-[280px] aspect-square border border-graphite/60 touch-none cursor-crosshair bg-paper"
           style={{
             backgroundImage:
               `linear-gradient(${grid}33 1px, transparent 1px),` +
@@ -140,7 +140,7 @@ export default function DrawPad({ ref }: DrawPadProps) {
             ref={previewRef}
             width={28}
             height={28}
-            className="w-14 h-14 pixelated rounded-[2px] border border-graphite/60 bg-paper/90"
+            className="w-14 h-14 pixelated border border-graphite/60 bg-paper/90"
             aria-label="Preview of the 28 by 28 image the model receives"
           />
           <span className="font-mono text-[10px] text-faint">what it sees</span>
