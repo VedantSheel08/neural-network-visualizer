@@ -50,7 +50,7 @@ function Section({ id, num, title, children }: { id: string; num: number; title:
       <motion.span
         aria-hidden="true"
         style={reduced ? { opacity: 0.15 } : { y: numY, opacity: numOpacity }}
-        className="pointer-events-none select-none absolute -top-2 md:top-0 right-2 md:-right-4 text-[92px] md:text-[150px] font-bold text-graphite leading-none"
+        className="pointer-events-none select-none absolute -top-2 md:top-0 right-2 md:-right-4 text-[64px] md:text-[150px] font-bold text-graphite leading-none"
       >
         {String(num).padStart(2, "0")}
       </motion.span>
