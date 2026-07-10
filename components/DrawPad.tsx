@@ -143,7 +143,7 @@ export default function DrawPad({ ref }: DrawPadProps) {
             className="w-14 h-14 pixelated rounded-[2px] border border-graphite/60 bg-paper/90"
             aria-label="Preview of the 28 by 28 image the model receives"
           />
-          <span className="font-mono text-[9px] text-faint">what it sees</span>
+          <span className="font-mono text-[10px] text-faint">what it sees</span>
         </div>
       </div>
     </div>
