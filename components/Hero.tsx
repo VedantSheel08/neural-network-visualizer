@@ -126,14 +126,14 @@ export default function Hero() {
             className="md:absolute md:left-8 md:bottom-8 md:z-10 flex flex-col gap-4 w-full max-w-xs"
           >
             <DrawPad />
-            <div className="panel p-5 hidden md:block">
+            <div className="hidden md:block">
               <Controls />
             </div>
           </motion.div>
 
-          <div className="panel p-5 md:hidden">
+          <TerminalPanel label="camera.focus()" className="md:hidden">
             <FocusBar />
-          </div>
+          </TerminalPanel>
 
           <motion.div
             {...panel}
@@ -149,7 +149,7 @@ export default function Hero() {
             </div>
           </motion.div>
 
-          <div className="panel p-5 md:hidden">
+          <div className="md:hidden">
             <Controls />
           </div>
         </div>
