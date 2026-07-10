@@ -23,7 +23,7 @@ export default function FocusBar() {
           key={f}
           type="button"
           onClick={() => setFocus(f)}
-          className={`px-2.5 py-1 text-[12px] border ${
+          className={`px-2.5 py-1.5 md:py-1 text-[12px] border ${
             focus === f
               ? "border-copper text-copper"
               : "border-ink/25 text-ink/80 hover:border-copper hover:text-copper"
@@ -35,7 +35,7 @@ export default function FocusBar() {
       <button
         type="button"
         onClick={() => setFocus(-1)}
-        className="px-2.5 py-1 text-[12px] border border-ink/25 text-faint hover:border-copper hover:text-copper"
+        className="px-2.5 py-1.5 md:py-1 text-[12px] border border-ink/25 text-faint hover:border-copper hover:text-copper"
       >
         back out
       </button>
