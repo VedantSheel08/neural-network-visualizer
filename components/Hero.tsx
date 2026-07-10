@@ -142,9 +142,7 @@ export default function Hero() {
           >
             <Inspector />
             <Readout />
-            <div className="panel p-5 empty:hidden">
-              <History />
-            </div>
+            <History />
           </motion.div>
 
           <div className="md:hidden">

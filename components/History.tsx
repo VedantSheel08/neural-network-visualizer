@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useApp } from "@/lib/store";
 import { PALETTES } from "@/lib/theme";
+import TerminalPanel from "@/components/TerminalPanel";
 
 function Thumb({ input }: { input: Float32Array }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -34,8 +35,7 @@ export default function History() {
   const history = useApp((s) => s.history);
   if (history.length === 0) return null;
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-[12px] text-faint">stuff you&apos;ve drawn so far</span>
+    <TerminalPanel label={`history.log() — ${history.length} run${history.length === 1 ? "" : "s"}`}>
       <ul className="flex gap-2 flex-wrap">
         {history.map((h) => (
           <li key={h.id} className="flex flex-col items-center gap-1">
@@ -47,6 +47,6 @@ export default function History() {
           </li>
         ))}
       </ul>
-    </div>
+    </TerminalPanel>
   );
 }
