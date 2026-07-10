@@ -236,7 +236,7 @@ export default function Inspector() {
               type="button"
               onClick={() => select(null)}
               aria-label="close"
-              className="text-faint hover:text-ink leading-none text-lg -mt-1"
+              className="text-faint hover:text-ink leading-none text-lg p-2 -m-2"
             >
               ×
             </button>
