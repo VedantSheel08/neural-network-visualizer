@@ -227,7 +227,7 @@ export default function Inspector() {
           animate={{ opacity: 1, x: 0 }}
           exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: 24 }}
           transition={{ type: "spring", stiffness: 380, damping: 34 }}
-          className="panel p-4 w-full max-w-xs max-h-[70vh] overflow-y-auto"
+          className="panel p-5 w-full max-w-xs max-h-[70vh] overflow-y-auto"
           aria-label="Inspector"
         >
           <div className="flex items-start justify-between gap-2 mb-3">

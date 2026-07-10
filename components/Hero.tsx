@@ -129,13 +129,13 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="z-10 flex flex-col gap-4 p-4 md:p-0 md:contents">
+        <div className="z-10 flex flex-col gap-5 p-4 md:p-0 md:contents">
           <motion.div
             {...panel}
             transition={{ duration: 0.4, delay: reducedMotion ? 0 : 0.1 }}
-            className="md:absolute md:left-6 md:bottom-6 md:z-10 flex flex-col gap-3 w-full max-w-xs"
+            className="md:absolute md:left-8 md:bottom-8 md:z-10 flex flex-col gap-4 w-full max-w-xs"
           >
-            <div className="panel p-4">
+            <div className="panel p-5">
               <DrawPad ref={padRef} />
               <div className="mt-4 flex items-center justify-between gap-3">
                 <button
@@ -160,36 +160,36 @@ export default function Hero() {
                 </p>
               )}
             </div>
-            <div className="panel p-4 hidden md:block">
+            <div className="panel p-5 hidden md:block">
               <Controls />
             </div>
           </motion.div>
 
-          <div className="panel p-4 md:hidden">
+          <div className="panel p-5 md:hidden">
             <FocusBar />
           </div>
 
           <motion.div
             {...panel}
             transition={{ duration: 0.4, delay: reducedMotion ? 0 : 0.2 }}
-            className="md:absolute md:right-6 md:top-16 md:z-10 flex flex-col gap-3 w-full max-w-xs md:max-h-[calc(100dvh-6rem)] md:overflow-y-auto"
+            className="md:absolute md:right-8 md:top-20 md:z-10 flex flex-col gap-4 w-full max-w-xs md:max-h-[calc(100dvh-7rem)] md:overflow-y-auto"
           >
             <Inspector />
-            <div className="panel p-4">
+            <div className="panel p-5">
               <Readout />
             </div>
-            <div className="panel p-4 empty:hidden">
+            <div className="panel p-5 empty:hidden">
               <History />
             </div>
           </motion.div>
 
-          <div className="panel p-4 md:hidden">
+          <div className="panel p-5 md:hidden">
             <Controls />
           </div>
         </div>
 
         {tour === null && (
-          <div className="hidden md:block absolute bottom-16 left-1/2 -translate-x-1/2 z-10 panel px-3 py-2">
+          <div className="hidden md:block absolute bottom-20 left-1/2 -translate-x-1/2 z-10 panel px-4 py-2.5">
             <FocusBar />
           </div>
         )}
