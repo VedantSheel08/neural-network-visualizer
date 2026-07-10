@@ -104,3 +104,60 @@ export default function ChapterRail() {
     </nav>
   );
 }
+
+/** same chapter tracking as the rail, but a bottom-fixed horizontal strip
+ *  for phones and tablets, which never get the fixed side rail (there's no
+ *  room for it without eating into the reading column). lets touch users
+ *  jump between sections the same way a mouse user can with the rail. */
+export function MobileChapterNav() {
+  const { active, visible } = useChapterProgress();
+  const reducedMotion = useApp((s) => s.reducedMotion);
+  const stripRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const btn = stripRef.current?.children[active] as HTMLElement | undefined;
+    btn?.scrollIntoView({
+      behavior: reducedMotion ? "auto" : "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  }, [active, reducedMotion]);
+
+  return (
+    <nav
+      aria-label="chapters"
+      className={`lg:hidden fixed bottom-0 inset-x-0 z-20 panel border-t border-graphite transition-opacity duration-500 ${
+        visible ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}
+    >
+      <div
+        ref={stripRef}
+        className="flex gap-1 overflow-x-auto px-3 py-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {CHAPTERS.map((c, i) => {
+          const isActive = i === active;
+          return (
+            <a
+              key={c.id}
+              href={`#${c.id}`}
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById(c.id)?.scrollIntoView({
+                  behavior: reducedMotion ? "auto" : "smooth",
+                  block: "start",
+                });
+              }}
+              className={`shrink-0 whitespace-nowrap px-2.5 py-1.5 text-[12px] border ${
+                isActive
+                  ? "border-copper text-copper"
+                  : "border-graphite text-faint"
+              }`}
+            >
+              {String(i + 1).padStart(2, "0")} {c.label}
+            </a>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}

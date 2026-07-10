@@ -2,7 +2,7 @@
 
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import ChapterRail from "@/components/ChapterRail";
+import ChapterRail, { MobileChapterNav } from "@/components/ChapterRail";
 import MathTex from "@/components/MathTex";
 import Quiz from "@/components/Quiz";
 import Term from "@/components/Term";
@@ -711,8 +711,9 @@ function Footer() {
 
 export default function Chapters() {
   return (
-    <>
+    <div className="pb-14 lg:pb-0">
       <ChapterRail />
+      <MobileChapterNav />
       <Machine />
       <Trace />
       <Pixels />
@@ -737,6 +738,6 @@ export default function Chapters() {
       <Trace />
       <About />
       <Footer />
-    </>
+    </div>
   );
 }
