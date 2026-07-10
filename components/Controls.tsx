@@ -57,7 +57,7 @@ export default function Controls() {
           type="button"
           onClick={nextStep}
           disabled={!stepping || stepIndex >= STEP_CHECKPOINTS.length - 1}
-          className="px-3 py-1.5 text-[12px] rounded border border-graphite text-ink hover:border-copper disabled:opacity-30 disabled:cursor-not-allowed"
+          className="px-3 py-1.5 text-[12px] border border-graphite text-ink hover:border-copper disabled:opacity-30 disabled:cursor-not-allowed"
         >
           next layer
         </button>
@@ -68,7 +68,7 @@ export default function Controls() {
           {STEP_LABELS.map((label, i) => (
             <div
               key={label}
-              className={`flex-1 h-1 rounded-full ${run && i <= stepIndex ? "bg-copper" : "bg-graphite/60"}`}
+              className={`flex-1 h-1 ${run && i <= stepIndex ? "bg-copper" : "bg-graphite/60"}`}
               title={label}
             />
           ))}
@@ -84,7 +84,7 @@ export default function Controls() {
         type="button"
         onClick={() => execute("run")}
         disabled={!input || !run}
-        className="self-start px-3 py-1.5 text-[12px] rounded border border-graphite text-faint hover:text-ink hover:border-copper disabled:opacity-30"
+        className="self-start px-3 py-1.5 text-[12px] border border-graphite text-faint hover:text-ink hover:border-copper disabled:opacity-30"
       >
         run it again
       </button>
