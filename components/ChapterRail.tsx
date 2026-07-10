@@ -18,10 +18,11 @@ export const CHAPTERS: { id: string; label: string }[] = [
   { id: "about", label: "about" },
 ];
 
-export default function ChapterRail() {
+/** tracks which chapter is on screen right now, shared by the desktop rail
+ *  and the mobile chapter strip so both stay in sync off one observer. */
+function useChapterProgress() {
   const [active, setActive] = useState(0);
   const [visible, setVisible] = useState(false);
-  const reducedMotion = useApp((s) => s.reducedMotion);
   const observed = useRef(false);
 
   useEffect(() => {
@@ -46,6 +47,13 @@ export default function ChapterRail() {
     for (const el of els) io.observe(el);
     return () => io.disconnect();
   }, []);
+
+  return { active, visible };
+}
+
+export default function ChapterRail() {
+  const { active, visible } = useChapterProgress();
+  const reducedMotion = useApp((s) => s.reducedMotion);
 
   return (
     <nav
