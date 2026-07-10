@@ -48,7 +48,7 @@ function WeightHeatmap({ weights }: { weights: number[] }) {
         ref={ref}
         width={28}
         height={28}
-        className="w-32 h-32 pixelated rounded border border-graphite bg-paper"
+        className="w-32 h-32 pixelated border border-graphite bg-paper"
       />
       <span className="text-[10px] leading-snug text-faint">
         this neuron&apos;s 784 weights, drawn as pixels. orange pixels help it
@@ -71,7 +71,7 @@ function WeightBars({ weights }: { weights: number[] }) {
           <div className="relative flex-1 h-[6px]">
             <div className="absolute inset-y-0 left-1/2 w-px bg-graphite" />
             <div
-              className={`absolute inset-y-0 rounded-[1px] ${w >= 0 ? "bg-copper left-1/2" : "bg-faint right-1/2"}`}
+              className={`absolute inset-y-0 ${w >= 0 ? "bg-copper left-1/2" : "bg-faint right-1/2"}`}
               style={{ width: `${max > 0 ? (Math.abs(w) / max) * 50 : 0}%` }}
             />
           </div>
@@ -116,11 +116,11 @@ export default function Inspector() {
     body = (
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-2 font-mono text-[12px]">
-          <div className="rounded bg-paper border border-graphite px-2 py-1.5">
+          <div className="bg-paper border border-graphite px-2 py-1.5">
             <div className="text-[9px] text-faint">weighted sum (z)</div>
             <div className="text-ink tabular-nums">{acts ? acts.z[index].toFixed(4) : "run first"}</div>
           </div>
-          <div className="rounded bg-paper border border-graphite px-2 py-1.5">
+          <div className="bg-paper border border-graphite px-2 py-1.5">
             <div className="text-[9px] text-faint">{isOutput ? "probability" : "output (after relu)"}</div>
             <div className={`tabular-nums ${overridden ? "text-gold" : "text-ink"}`}>
               {acts
@@ -227,7 +227,7 @@ export default function Inspector() {
           animate={{ opacity: 1, x: 0 }}
           exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: 24 }}
           transition={{ type: "spring", stiffness: 380, damping: 34 }}
-          className="panel rounded p-4 w-full max-w-xs max-h-[70vh] overflow-y-auto"
+          className="panel p-4 w-full max-w-xs max-h-[70vh] overflow-y-auto"
           aria-label="Inspector"
         >
           <div className="flex items-start justify-between gap-2 mb-3">
