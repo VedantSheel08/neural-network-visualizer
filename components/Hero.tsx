@@ -84,17 +84,20 @@ export default function Hero() {
             <ThemeToggle />
           </div>
           <div className="mt-1 flex flex-col items-center text-center">
-            <h1 className="text-3xl md:text-4xl font-bold text-ink lowercase">vedant sheel</h1>
-            <p className="mt-1.5 text-[15px] md:text-base text-ink/80 max-w-[440px] leading-snug">
+            <h1 className="text-3xl md:text-4xl font-bold text-ink lowercase">neural network visualizer</h1>
+            <p className="mt-1 text-[13px] text-faint pointer-events-auto">
+              by{" "}
+              <a className="plain" href="https://vedantsheel.com" target="_blank" rel="noopener noreferrer">
+                vedant sheel
+              </a>
+            </p>
+            <p className="mt-2.5 text-[15px] md:text-base text-ink/80 max-w-[440px] leading-snug">
               i trained a neural network and put it in your browser. draw a
               number, hit run, and watch it actually think. everything you see
               is real math happening live, and you can click all of it.
             </p>
-            <p className="mt-1.5 text-[13px] text-faint pointer-events-auto">
-              <a className="plain" href="https://vedantsheel.com" target="_blank" rel="noopener noreferrer">
-                vedantsheel.com
-              </a>
-              <span> · vedant.sheel [at] uwaterloo [dot] com</span>
+            <p className="mt-1.5 text-[12px] text-faint pointer-events-auto">
+              vedant.sheel [at] uwaterloo [dot] com
             </p>
             <p className="mt-1 text-[12px] text-faint font-mono">
               784→64→48→32→16→10, 96.9% accurate
