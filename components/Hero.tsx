@@ -10,6 +10,7 @@ import History from "@/components/History";
 import HoverTip from "@/components/HoverTip";
 import Inspector from "@/components/Inspector";
 import Readout from "@/components/Readout";
+import TerminalPanel from "@/components/TerminalPanel";
 import ThemeToggle from "@/components/ThemeToggle";
 import Tour from "@/components/Tour";
 import { useApp } from "@/lib/store";
@@ -99,35 +100,27 @@ export default function Hero() {
           </div>
         </motion.header>
 
-        <div
-          className={`cursor-zone relative mx-3 mt-3 md:mt-0 md:h-auto md:absolute border border-graphite bg-card flex flex-col overflow-hidden transition-[height] duration-300 ${
+        <TerminalPanel
+          label={`network.forward() — ${modelError ? "error" : model ? "live" : "loading…"}`}
+          bodyClassName="relative flex-1"
+          className={`cursor-zone relative mx-3 mt-3 md:mt-0 md:h-auto md:absolute transition-[height] duration-300 ${
             expanded
               ? "h-[62dvh] min-h-[380px] md:inset-x-8 md:top-72 md:bottom-24"
               : "h-[36dvh] min-h-[240px] md:inset-x-20 md:top-80 md:bottom-32"
           }`}
-        >
-          <div className="shrink-0 h-8 flex items-center gap-2 px-3 border-b border-graphite">
-            <span className="flex gap-[6px]" aria-hidden="true">
-              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e0605a" /></svg>
-              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e0b04a" /></svg>
-              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#5fae5f" /></svg>
-            </span>
-            <span className="flex-1 text-[11px] text-faint tracking-tight font-mono">
-              network.forward() — {modelError ? "error" : model ? "live" : "loading…"}
-            </span>
+          right={
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
               aria-label={expanded ? "shrink the network view" : "enlarge the network view"}
-              className="text-[11px] text-faint hover:text-ink border border-graphite px-2 py-0.5"
+              className="shrink-0 text-[11px] text-faint hover:text-ink border border-graphite px-2 py-0.5"
             >
               {expanded ? "shrink" : "enlarge"}
             </button>
-          </div>
-          <div className="relative flex-1">
-            <NetworkScene scrollT={scrollYProgress} />
-          </div>
-        </div>
+          }
+        >
+          <NetworkScene scrollT={scrollYProgress} />
+        </TerminalPanel>
 
         <div className="z-10 flex flex-col gap-5 p-4 md:p-0 md:contents">
           <motion.div
