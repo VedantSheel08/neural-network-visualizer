@@ -141,9 +141,7 @@ export default function Hero() {
             className="md:absolute md:right-8 md:top-20 md:z-10 flex flex-col gap-4 w-full max-w-xs md:max-h-[calc(100dvh-7rem)] md:overflow-y-auto"
           >
             <Inspector />
-            <div className="panel p-5">
-              <Readout />
-            </div>
+            <Readout />
             <div className="panel p-5 empty:hidden">
               <History />
             </div>
