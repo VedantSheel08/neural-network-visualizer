@@ -21,7 +21,7 @@ export default function Readout() {
 
       <div className="flex items-center gap-4">
         <div
-          className="w-20 h-20 shrink-0 rounded border border-graphite bg-paper grid place-items-center font-mono text-5xl"
+          className="w-20 h-20 shrink-0 border border-graphite bg-paper grid place-items-center font-mono text-5xl"
           style={{ color: show ? "var(--gold)" : "var(--graphite)" }}
         >
           {show ? result.prediction : "?"}
@@ -51,7 +51,7 @@ export default function Readout() {
               <span className={`w-3 text-right ${isWinner ? "text-gold font-bold" : "text-faint"}`}>
                 {digit}
               </span>
-              <div className="flex-1 h-[9px] bg-paper rounded-[3px] overflow-hidden border border-graphite/50">
+              <div className="flex-1 h-[9px] bg-paper overflow-hidden border border-graphite/50">
                 <div
                   className={`h-full bg-copper transition-[width] duration-500 motion-reduce:transition-none ${
                     isWinner ? "" : "opacity-55"
