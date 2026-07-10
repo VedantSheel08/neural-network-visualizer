@@ -150,7 +150,7 @@ export default function Hero() {
           <motion.div
             {...panel}
             transition={{ duration: 0.4, delay: reducedMotion ? 0 : 0.2 }}
-            className="md:absolute md:right-6 md:top-16 md:z-10 flex flex-col gap-3 w-full max-w-xs md:max-h-[calc(100dvh-6rem)]"
+            className="md:absolute md:right-6 md:top-16 md:z-10 flex flex-col gap-3 w-full max-w-xs md:max-h-[calc(100dvh-6rem)] md:overflow-y-auto"
           >
             <Inspector />
             <div className="panel rounded p-4">
