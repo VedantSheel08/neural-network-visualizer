@@ -40,11 +40,10 @@
   --color-ember: var(--ember);
   --color-gold: var(--gold);
 
-  /* one normal serif for everything, including numbers. no typewriter
-     font, no coding font, just the same face a person would actually
-     write in. */
+  /* one normal serif for prose. numbers and stats get plain arial,
+     no typewriter font, no coding font. */
   --font-body: Georgia, "Times New Roman", serif;
-  --font-mono: Georgia, "Times New Roman", serif;
+  --font-mono: Arial, Helvetica, sans-serif;
 }
 
 /* square corners everywhere. rounded everything is a template smell. */
