@@ -17,7 +17,7 @@ export default function Quiz({ q, options, answer, explain }: QuizProps) {
   const [picked, setPicked] = useState<number | null>(null);
   const done = picked !== null;
   return (
-    <div className="my-6 rounded border border-graphite bg-card p-4 max-w-xl">
+    <div className="my-6 border border-graphite bg-card p-4 max-w-xl">
       <p className="text-[13px] font-medium text-ink mb-3">quick check: {q}</p>
       <div className="flex flex-col gap-1.5">
         {options.map((opt, i) => {
@@ -29,7 +29,7 @@ export default function Quiz({ q, options, answer, explain }: QuizProps) {
               type="button"
               onClick={() => setPicked(i)}
               disabled={done}
-              className={`text-left text-[13px] rounded border px-3 py-2 disabled:cursor-default ${
+              className={`text-left text-[13px] border px-3 py-2 disabled:cursor-default ${
                 done && isRight
                   ? "border-copper bg-copper/10 text-ink"
                   : done && isPick
