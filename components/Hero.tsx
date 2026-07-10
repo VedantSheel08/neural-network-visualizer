@@ -59,14 +59,26 @@ export default function Hero() {
   return (
     <div ref={wrapRef} className="relative md:h-[200vh]">
       <section className="relative flex flex-col md:block md:sticky md:top-0 md:h-dvh">
-        <div className="cursor-zone relative h-[52dvh] min-h-[320px] md:h-full md:absolute md:inset-0">
-          <NetworkScene scrollT={scrollYProgress} />
+        <div className="cursor-zone relative h-[52dvh] min-h-[320px] mx-3 mt-3 md:mt-0 md:h-auto md:absolute md:inset-x-8 md:top-72 md:bottom-24 border border-graphite bg-card flex flex-col overflow-hidden">
+          <div className="shrink-0 h-8 flex items-center gap-2 px-3 border-b border-graphite">
+            <span className="flex gap-[6px]" aria-hidden="true">
+              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e0605a" /></svg>
+              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e0b04a" /></svg>
+              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#5fae5f" /></svg>
+            </span>
+            <span className="text-[11px] text-faint tracking-tight font-mono">
+              network.forward() — {modelError ? "error" : model ? "live" : "loading…"}
+            </span>
+          </div>
+          <div className="relative flex-1">
+            <NetworkScene scrollT={scrollYProgress} />
+          </div>
         </div>
 
         <motion.header
           {...panel}
           transition={{ duration: 0.4 }}
-          className="absolute top-0 inset-x-0 z-20 px-4 md:px-7 py-4 pointer-events-none"
+          className="relative md:absolute md:top-0 inset-x-0 z-20 px-4 md:px-7 py-4 pointer-events-none"
         >
           <div className="flex justify-end pointer-events-auto">
             <ThemeToggle />
@@ -84,7 +96,7 @@ export default function Hero() {
               </a>
               <span> · vedant.sheel [at] uwaterloo [dot] com</span>
             </p>
-            <p className="mt-1 text-[12px] text-faint">
+            <p className="mt-1 text-[12px] text-faint font-mono">
               784→64→48→32→16→10, 96.9% accurate
             </p>
             {tour === null && (
