@@ -39,36 +39,17 @@ function Trace() {
 function Section({ id, num, title, children }: { id: string; num: number; title: string; children: React.ReactNode }) {
   const reduced = useApp((s) => s.reducedMotion);
   const ref = useRef<HTMLElement>(null);
-  const fromLeft = num % 2 === 1;
-
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "start start"] });
-  const numY = useTransform(scrollYProgress, [0, 1], [50, -30]);
-  const numOpacity = useTransform(scrollYProgress, [0, 0.5, 1], [0, 0.4, 0.12]);
 
   return (
-    <section ref={ref} id={id} className="relative max-w-2xl mx-auto px-6 py-16 md:py-24 overflow-hidden">
-      <motion.span
-        aria-hidden="true"
-        style={reduced ? { opacity: 0.15 } : { y: numY, opacity: numOpacity }}
-        className="pointer-events-none select-none absolute -top-2 md:top-0 right-2 md:-right-4 text-[64px] md:text-[150px] font-bold text-graphite leading-none"
-      >
-        {String(num).padStart(2, "0")}
-      </motion.span>
+    <section ref={ref} id={id} className="relative max-w-2xl mx-auto px-6 py-16 md:py-20">
       <motion.div
-        initial={
-          reduced
-            ? false
-            : {
-                opacity: 0,
-                clipPath: fromLeft ? "inset(0 100% 0 0)" : "inset(0 0 0 100%)",
-              }
-        }
-        whileInView={{ opacity: 1, clipPath: "inset(0 0% 0 0%)" }}
+        initial={reduced ? false : { opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: reduced ? 0 : 0.75, ease: [0.16, 1, 0.3, 1] }}
-        className="relative"
+        transition={{ duration: reduced ? 0 : 0.5, ease: [0.16, 1, 0.3, 1] }}
       >
-        <h2 className="text-2xl md:text-3xl font-bold text-ink mb-6 lowercase">{title}</h2>
+        <p className="font-mono text-[12px] text-copper mb-2">{String(num).padStart(2, "0")}</p>
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-ink mb-6">{title}</h2>
         {children}
       </motion.div>
     </section>

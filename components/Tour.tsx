@@ -69,7 +69,7 @@ export default function Tour() {
   const last = tour === STEPS.length - 1;
 
   return (
-    <div className="fixed bottom-[4.75rem] lg:bottom-4 inset-x-4 z-30 mx-auto max-w-md panel px-4 py-3">
+    <div className="fixed bottom-[4.75rem] lg:bottom-4 inset-x-4 z-30 mx-auto max-w-md panel px-4 py-3 shadow-lg">
       <p className="text-[15px] leading-relaxed text-ink">{step.text}</p>
       <div className="mt-2.5 flex items-center justify-between gap-3">
         <button

@@ -126,7 +126,7 @@ export function MobileChapterNav() {
   return (
     <nav
       aria-label="chapters"
-      className={`lg:hidden fixed bottom-0 inset-x-0 z-20 panel border-t border-graphite transition-opacity duration-500 ${
+      className={`lg:hidden fixed bottom-0 inset-x-0 z-20 bg-card border-t border-graphite transition-opacity duration-500 ${
         visible ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
     >
