@@ -3,27 +3,27 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Plain and quiet on purpose. Neutral grays, one warm accent for anything
- * "on", and nothing else. Light and dark are both just ink on a surface.
+ * Neutral grays, one warm accent for anything "on", and nothing else.
+ * Light and dark are both just ink on a surface.
  */
 :root {
-  --paper: #fcfcfa;
-  --card: #f3f3ee;
-  --graphite: #d9d9d1;
-  --ink: #191917;
-  --faint: #75756d;
-  --copper: #d4551a;
-  --ember: #7a2e08;
-  --gold: #8f3a0e;
+  --paper: #ffffff;
+  --card: #f7f7f5;
+  --graphite: #e2e2de;
+  --ink: #161615;
+  --faint: #6e6e67;
+  --copper: #c2410c;
+  --ember: #7c2d12;
+  --gold: #92400e;
   color-scheme: light;
 }
 
 .dark {
-  --paper: #131312;
-  --card: #1c1c1a;
-  --graphite: #3b3b37;
-  --ink: #ebebe7;
-  --faint: #8f8f87;
+  --paper: #121212;
+  --card: #1b1b1a;
+  --graphite: #343431;
+  --ink: #ececea;
+  --faint: #8f8f89;
   --copper: #ff7a3d;
   --ember: #ffd9c0;
   --gold: #ffb37a;
@@ -40,21 +40,20 @@
   --color-ember: var(--ember);
   --color-gold: var(--gold);
 
-  /* one normal serif for prose. numbers and stats get plain arial,
-     no typewriter font, no coding font. */
-  --font-body: Georgia, "Times New Roman", serif;
-  --font-mono: Arial, Helvetica, sans-serif;
-}
-
-/* square corners everywhere. rounded everything is a template smell. */
-* {
-  border-radius: 0 !important;
+  --font-body:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-mono:
+    ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Liberation Mono",
+    monospace;
 }
 
 body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .theme-anim,
@@ -75,10 +74,11 @@ body {
   outline-offset: 2px;
 }
 
-/* a plain filled patch of page, not a bordered card. the faint tonal
-   shift from the surface behind it is the only cue there's a boundary. */
+/* the one card treatment used everywhere on the page */
 .panel {
   background: var(--card);
+  border: 1px solid var(--graphite);
+  border-radius: 6px;
 }
 
 .pixelated {
@@ -96,6 +96,7 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--graphite);
   border: 3px solid var(--paper);
+  border-radius: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -112,6 +113,10 @@ body {
 
 input[type="range"] {
   accent-color: var(--copper);
+}
+
+button {
+  border-radius: 4px;
 }
 
 /* dotted-underline word that explains itself on hover/tap */
