@@ -231,7 +231,7 @@ export default function Inspector() {
           aria-label="Inspector"
         >
           <div className="shrink-0 h-9 flex items-center gap-2 px-4 border-b border-graphite">
-            <span className="flex-1 min-w-0 truncate text-[11px] font-medium uppercase tracking-[0.08em] text-faint">
+            <span className="flex-1 min-w-0 truncate text-[12px] text-faint">
               {title}
             </span>
             <button
