@@ -45,7 +45,7 @@ TypeScript. No TensorFlow.js, no ONNX runtime, just arrays and loops.
   to actually follow along instead of just watching it flash by
 - There's a guided walkthrough if you want me to explain it, plus quizzes,
   hover definitions for the jargon, and links to the actual papers this stuff
-  comes from
+  comes from (copies of the papers live in `papers/` too)
 - Light and dark mode, and it remembers which one you picked
 
 ## Running it locally
