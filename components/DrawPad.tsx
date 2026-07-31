@@ -4,7 +4,7 @@ import { useCallback, useRef } from "react";
 import { canvasToModelInput } from "@/lib/preprocess";
 import { PALETTES } from "@/lib/theme";
 import { useApp } from "@/lib/store";
-import TerminalPanel from "@/components/TerminalPanel";
+import Panel from "@/components/Panel";
 
 const PAD_SIZE = 280;
 
@@ -107,7 +107,7 @@ export default function DrawPad() {
 
   const grid = PALETTES[mode].graphite;
   return (
-    <TerminalPanel label="input.draw() — 0 through 9">
+    <Panel label="draw a digit">
       <div className="flex flex-col gap-4 items-center">
         <div className="relative">
           <canvas
@@ -163,6 +163,6 @@ export default function DrawPad() {
           </p>
         )}
       </div>
-    </TerminalPanel>
+    </Panel>
   );
 }

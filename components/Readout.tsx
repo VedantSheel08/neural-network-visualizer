@@ -1,7 +1,7 @@
 "use client";
 
 import { useApp } from "@/lib/store";
-import TerminalPanel from "@/components/TerminalPanel";
+import Panel from "@/components/Panel";
 
 /**
  * The answer panel. One hue for the bars (single series); the winner is the
@@ -17,7 +17,7 @@ export default function Readout() {
   const probs = result ? Array.from(result.probabilities) : new Array<number>(10).fill(0);
 
   return (
-    <TerminalPanel label="model.predict()">
+    <Panel label="prediction">
       <div className="flex flex-col gap-4" aria-live="polite">
         <div className="flex items-center gap-3">
           <div
@@ -73,6 +73,6 @@ export default function Readout() {
           </p>
         )}
       </div>
-    </TerminalPanel>
+    </Panel>
   );
 }

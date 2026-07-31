@@ -227,17 +227,12 @@ export default function Inspector() {
           animate={{ opacity: 1, x: 0 }}
           exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: 24 }}
           transition={{ type: "spring", stiffness: 380, damping: 34 }}
-          className="panel border border-graphite flex flex-col overflow-hidden w-full max-w-xs max-h-[70vh]"
+          className="panel flex flex-col overflow-hidden w-full max-h-[70vh] pointer-events-auto shadow-lg"
           aria-label="Inspector"
         >
-          <div className="shrink-0 h-8 flex items-center gap-2 px-3 border-b border-graphite">
-            <span className="flex gap-[6px] shrink-0" aria-hidden="true">
-              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e0605a" /></svg>
-              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e0b04a" /></svg>
-              <svg width="9" height="9"><circle cx="4.5" cy="4.5" r="4.5" fill="#5fae5f" /></svg>
-            </span>
-            <span className="flex-1 min-w-0 truncate text-[11px] text-faint tracking-tight font-mono">
-              inspector.open() — {title}
+          <div className="shrink-0 h-9 flex items-center gap-2 px-4 border-b border-graphite">
+            <span className="flex-1 min-w-0 truncate text-[11px] font-medium uppercase tracking-[0.08em] text-faint">
+              {title}
             </span>
             <button
               type="button"

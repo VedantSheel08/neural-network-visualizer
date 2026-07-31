@@ -2,7 +2,7 @@
 
 import { useApp } from "@/lib/store";
 import { ARCH, STEP_CHECKPOINTS } from "@/lib/theme";
-import TerminalPanel from "@/components/TerminalPanel";
+import Panel from "@/components/Panel";
 
 const STEP_LABELS = [
   "the drawing",
@@ -25,7 +25,7 @@ export default function Controls() {
   const stepping = stepMode && run && !settled;
 
   return (
-    <TerminalPanel label="playback.speed()">
+    <Panel label="playback">
       <div className="flex flex-col gap-3">
         <label className="flex items-center gap-3 text-[12px] text-faint">
           <span className="w-10">speed</span>
@@ -89,6 +89,6 @@ export default function Controls() {
           run it again
         </button>
       </div>
-    </TerminalPanel>
+    </Panel>
   );
 }
