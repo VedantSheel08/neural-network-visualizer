@@ -66,18 +66,8 @@ export default function Hero() {
     <div className="relative">
       <header className="sticky top-0 z-30 border-b border-graphite bg-paper/85 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-4">
-          <span className="flex items-center gap-2.5">
-            <svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true" className="shrink-0">
-              <rect width="64" height="64" rx="16" fill="#161513" />
-              <line x1="20" y1="20" x2="45" y2="32" stroke="#ff7a3d" strokeWidth="4.5" strokeLinecap="round" />
-              <line x1="20" y1="44" x2="45" y2="32" stroke="#ff7a3d" strokeWidth="4.5" strokeLinecap="round" />
-              <circle cx="20" cy="20" r="7.5" fill="#4a473e" />
-              <circle cx="20" cy="44" r="7.5" fill="#4a473e" />
-              <circle cx="46" cy="32" r="10" fill="#ffb37a" />
-            </svg>
-            <span className="text-[15px] font-semibold tracking-tight text-ink">
-              neural network visualizer
-            </span>
+          <span className="text-[15px] font-semibold tracking-tight text-ink">
+            neural network visualizer
           </span>
           <nav className="flex items-center gap-2 md:gap-4">
             <button
