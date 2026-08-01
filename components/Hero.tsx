@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { motion, useReducedMotion } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Controls from "@/components/Controls";
 import DrawPad from "@/components/DrawPad";
 import FocusBar from "@/components/FocusBar";
@@ -26,6 +26,7 @@ const NetworkScene = dynamic(() => import("@/components/NetworkScene"), {
 
 export default function Hero() {
   const prefersReduced = useReducedMotion() ?? false;
+  const [showScrollCue, setShowScrollCue] = useState(true);
 
   const loadModel = useApp((s) => s.loadModel);
   const setEnv = useApp((s) => s.setEnv);
@@ -42,6 +43,14 @@ export default function Hero() {
       lowPower: window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768,
     });
   }, [loadModel, setEnv, prefersReduced]);
+
+  // hides the floating "keep scrolling" cue once you've actually started
+  useEffect(() => {
+    const onScroll = () => setShowScrollCue(window.scrollY < 400);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const scrollToChapters = () =>
     document.getElementById("machine")?.scrollIntoView({
@@ -154,6 +163,26 @@ export default function Hero() {
       <div className="fixed right-4 top-20 z-40 w-[min(20rem,calc(100vw-2rem))] pointer-events-none">
         <Inspector />
       </div>
+
+      <button
+        type="button"
+        onClick={scrollToChapters}
+        aria-label="scroll down to how it works"
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-20 w-10 h-10 grid place-items-center rounded-full border border-graphite bg-paper/90 backdrop-blur text-faint hover:text-copper hover:border-copper transition-opacity duration-300 ${
+          showScrollCue && tour === null ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <motion.svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          animate={reducedMotion ? {} : { y: [0, 4, 0] }}
+          transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </motion.svg>
+      </button>
 
       <HoverTip />
       <Tour />

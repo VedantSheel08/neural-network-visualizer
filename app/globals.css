@@ -43,9 +43,7 @@
   --font-body:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
     Arial, sans-serif;
-  --font-mono:
-    ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Liberation Mono",
-    monospace;
+  --font-mono: "Times New Roman", Times, Georgia, serif;
 }
 
 body {
