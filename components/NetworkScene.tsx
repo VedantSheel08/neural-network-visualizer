@@ -362,7 +362,6 @@ function Network({ scrollT }: NetworkProps) {
       haloMesh.setColorAt(k, new THREE.Color(0, 0, 0));
     }
     return { nodeMesh, haloMesh, setNodeScales };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodePositions, lowPower, mode]);
 
   const digitSprites = useMemo(() => {
