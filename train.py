@@ -1,4 +1,4 @@
-"""Train a tiny MNIST classifier (784 -> 16 -> 16 -> 10) and export weights.json.
+"""Train a small MNIST classifier (784 -> 64 -> 48 -> 32 -> 16 -> 10) and export weights.json.
 
 Input normalization: pixels scaled to [0, 1] (plain ToTensor, no mean/std shift)
 so the browser-side pipeline is simply pixel/255.
