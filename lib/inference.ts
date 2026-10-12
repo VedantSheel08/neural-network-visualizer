@@ -1,5 +1,5 @@
 /**
- * Client-side inference engine for the tiny MNIST net (784 -> 16 -> 16 -> 10).
+ * Client-side inference engine for the MNIST net (784 -> 64 -> 48 -> 32 -> 16 -> 10).
  *
  * Pure functions, no React, no ML library — just the matrix math. Weight
  * matrices follow the PyTorch nn.Linear convention: weights[i][j] is the
